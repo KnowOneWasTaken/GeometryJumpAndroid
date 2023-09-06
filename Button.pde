@@ -71,7 +71,6 @@ class Button {
       pic =img;
       break;
     }
-    println(touch);
     if (touch() && touch) {
       tint(c);
       if (mousePressed && (mouseButton == LEFT || touch)) {

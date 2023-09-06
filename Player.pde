@@ -175,7 +175,7 @@ class Player extends Figure {
                     if (framesSinceStarted < frames) {
                       levelTimes.setInt("frames", framesSinceStarted);
                       times.setJSONObject(level, levelTimes);
-                      saveJSONArray(times, "data/times.json");
+                      saveJSONArray(times, "times.json");
                       println("Player: hitbox(): JSONArray for Times saved");
                     }
                   }
@@ -187,15 +187,20 @@ class Player extends Figure {
                     levelTimes.setInt("frames", framesSinceStarted);
                     levelTimes.setInt("level", level);
                     times.setJSONObject(level, levelTimes );
-                    saveJSONArray(times, "data/times.json");
+                    saveJSONArray(times, "times.json");
                     println("Player: hitbox(): New times.json made");
                   }
-                  delay(3000);
+                  delay(2000);
                   inGame = false;
+                  cam.x = 0;
+                  cam.y = 0;
+                  println("keyReleased(): Left Game, level: "+level);
+                  playSound(tabChange, 0.7, true);
                 } else {
                   checkpointBlock = new PVector(int(f.x/blockSize), int((f.y/blockSize)-1));
                   println("Player: hitbox(): Checkpoint reached: "+checkpointBlock.x + ", "+checkpointBlock.y+ "; Vector: "+new PVector(int(f.x/blockSize), int((f.y/blockSize)-1)));
                   playSound(collectCoin, 0.5, true);
+                  checkpointAnimation(int(x+w/2), int(y+h));
                 }
               }
             }
