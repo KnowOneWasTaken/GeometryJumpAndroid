@@ -487,6 +487,7 @@ void click(boolean touch) {
       cam.y = 0;
       println("keyReleased(): Left Game, level: "+level);
       playSound(tabChange, 0.7, true);
+      particles.removeAll(particles);
     }
   } else if (everythingLoaded) {
     coinAnimation(mouseX, mouseY);
@@ -584,6 +585,7 @@ void keyReleased() {
       cam.x = 0;
       cam.y = 0;
       println("keyReleased(): Left Game, level: "+level);
+      particles.removeAll(particles);
     }
   }
 }
@@ -709,8 +711,12 @@ void coinAnimation(int x, int y) {
 }
 
 void particleAnimation(int x, int y, PImage img, int count, int size) {
+  particleAnimation(x, y, img, count, size, 5, -5, -5, -20);
+}
+
+void particleAnimation(int x, int y, PImage img, int count, int size, int maxVX, int minVX, int maxVY, int minVY) {
   for (int i = 0; i < count; i++) {
-    particles.add(new Particle(x+int(random(-8, 8)), y+int(random(-8, 8)), img, size));
+    particles.add(new Particle(x+int(random(-8, 8)), y+int(random(-8, 8)), img, size, maxVX, minVX, maxVY, minVY));
   }
 }
 
@@ -731,6 +737,10 @@ void slimeAnimation(int x, int y) {
 
 void checkpointAnimation(int x, int y) {
   particleAnimation(x, y, particleCheckpoint, 25, 20);
+}
+
+void wallAnimation(int x, int y) {
+  particleAnimation(x, y, particleWall, 1, 15, 5, -5, -2, -7);
 }
 
 PImage levelXImage(int printLevel) {
