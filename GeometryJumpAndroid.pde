@@ -4,9 +4,10 @@ SoundFile click, background1, background2, reset, jump, jumpSlime, collectCoin, 
 
 //These are variable declarations used throughout the program. They include objects such as figures, images, player, camera, and various flags and settings.
 PImage spike, wall, play, spikeGlow, slime, slimeGlow, wallGlow, remove, coin, coinGlow, checkpoint, checkpointGlow, BEditModeOn, BEditModeOff, BLevel1, BLevel1Glow, BLevel2, right, rightGlow, left, leftGlow, BLevelX, goalGlow, particleStar,
-  particleWall, ButtonLEFT, ButtonRIGHT, ButtonUP, clear, ButtonEXIT, particleSlime, particleCheckpoint;
+  particleWall, ButtonLEFT, ButtonRIGHT, ButtonUP, clear, ButtonEXIT, particleSlime, particleCheckpoint, bgSwitch, offSwitch, onSwitch, ButtonSwitch;
 
-Button Edit, SkipRight, SkipLeft, LevelX, Left, Right, Up, Exit;
+Button Edit, SkipRight, SkipLeft, LevelX, Left, Right, Up, Exit, SwitchEdit;
+SwitchButton BgMusicSwitch, SoundEffectsSwitch;
 
 ArrayList<Particle> particles = new ArrayList<Particle>();
 
@@ -18,8 +19,9 @@ boolean[] keysPressed = new boolean[65536]; //used to check if a key is pressed 
 JSONArray world; //The json-Array that contains the figures of the environment
 JSONArray times; //contains the times (frame-Counts) in which the player has completed the levels (best scores)
 String editMode = "wall"; //default for the world-edit mode: selects box/walls as the default to add to your world in editModeOn
+int editModeInt = 1;
 boolean editModeOn = false; //idicates if the editMode is on or off
-boolean gravity = true; //indicates if gravity is in editModeOn active or not
+boolean gravity = false; //indicates if gravity is in editModeOn active or not
 int coinsCollected = 0; //indicates how many coins the player has collected in a level
 boolean touch = false; //indicates, if a finger is on the screen or not
 float gameZoom = 1.8; //makes the gameplay bigger (zooms in), when you are on a smartphone
@@ -38,7 +40,7 @@ int levelAmount = 9; //indicates how many levels there are which should not be a
 int framesSinceStarted = 0; //counts the frames, since the player has started a level (reset by death)
 int loaded = 0;
 
-BackgroundFigure[] bgFigures = new BackgroundFigure[15]; //Figures floating in Menue
+BackgroundFigure[] bgFigures = new BackgroundFigure[20]; //Figures floating in Menue
 boolean everythingLoaded = false;
 float backgroundMusicAmp = 1;
 
@@ -58,16 +60,20 @@ void setup() {
   ch = new Checkpoint();
   go = new Goal();
 
+  BgMusicSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width-100, 20, 80, 40);
+  SoundEffectsSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width-100, 80, 80, 40);
+
   cam = new Cam(0, 0, 1920, 1080);
 
-  Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-180*(width/1920f)), int(20*(height/1080f)), int(160*(width/1920f)), int(80*(height/1080f)));
-  Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-180*(width/1920f)), int(105*(height/1080f)), int(160*(width/1920f)), int(80*(height/1080f)));
+  Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-180*(width/1920f)), int(105*(height/1080f)), int(160*(width/1920f)), int(80*(height/1080f)));
+  Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-180*(width/1920f)), int(20*(height/1080f)), int(160*(width/1920f)), int(80*(height/1080f)));
   LevelX = new Button(true, BLevelX, BLevel1Glow, false, int(width/2-320*(width/1920f)), int(height/2-220*(height/1080f)), int(640*(width/1920f)), int(440*(height/1080f)), 1, false, true);
   SkipRight = new Button(true, right, rightGlow, false, int(width/2+(320+50)*(width/1920f)), int(height/2-75*(height/1080f)), int(100*(width/1920f)), int(150*(height/1080f)), 1, false, true);
   SkipLeft = new Button(true, left, leftGlow, false, int(width/2+(-320-50-100)*(width/1920f)), int(height/2-75*(height/1080f)), int(100*(width/1920f)), int(150*(height/1080f)), 1, false, true);
   Left = new Button(true, ButtonLEFT, clear, false, int(width/2+(-320-50-100-400)*(width/1920f)), int(height-305*(height/1080f)), int(400*(width/1920f)), int(300*(height/1080f)), 1, false, true);
   Right = new Button(true, ButtonRIGHT, clear, false, int(width/2+(320+50+100)*(width/1920f)), int(height-305*(height/1080f)), int(400*(width/1920f)), int(300*(height/1080f)), 1, false, true);
   Up = new Button(true, ButtonUP, clear, false, int(width/2-(300)*(width/1920f)), int(height-305*(height/1080f)), int(600*(width/1920f)), int(300*(height/1080f)), 1, false, true);
+  SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-180*(width/1920f)), int(190*(height/1080f)), int(160*(width/1920f)), int(80*(height/1080f)));
 
   if (height > width) {
     SkipRight = new Button(true, right, rightGlow, false, int(width/2+(550+40)*(width/1920f)), int(height/2-75*(height/1080f)), int(200*(width/1920f)), int(150*(height/1080f)), 1, false, true);
@@ -76,8 +82,9 @@ void setup() {
     Left = new Button(true, ButtonLEFT, clear, false, int(width/2+(-320-50-100-400)*(width/1920f)), int(height-205*(height/1080f)), int(400*(width/1920f)), int(200*(height/1080f)), 1, false, true);
     Right = new Button(true, ButtonRIGHT, clear, false, int(width/2+(320+50+100)*(width/1920f)), int(height-205*(height/1080f)), int(400*(width/1920f)), int(200*(height/1080f)), 1, false, true);
     Up = new Button(true, ButtonUP, clear, false, int(width/2-(300)*(width/1920f)), int(height-205*(height/1080f)), int(600*(width/1920f)), int(200*(height/1080f)), 1, false, true);
-    Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-410*(width/1920f)), int(20*(height/1080f)), int(400*(width/1920f)), int(60*(height/1080f)));
-    Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-410*(width/1920f)), int(85*(height/1080f)), int(400*(width/1920f)), int(60*(height/1080f)));
+    Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-410*(width/1920f)), int(85*(height/1080f)), int(400*(width/1920f)), int(60*(height/1080f)));
+    Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-410*(width/1920f)), int(20*(height/1080f)), int(400*(width/1920f)), int(60*(height/1080f)));
+    SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-410*(width/1920f)), int((85+20+60)*(height/1080f)), int(400*(width/1920f)), int(60*(height/1080f)));
   }
 
   setupBGAnimation();
@@ -107,6 +114,10 @@ void draw() {
     //displays the block, which is currently selected for edit,if you are in editModeOn
     showEditMode();
 
+    if (editModeOn) {
+      SwitchEdit.show();
+    }
+
     //plays the background1 sound in a loop when it's loaded
     playBackgroundMusic();
     Edit.show();
@@ -117,14 +128,34 @@ void draw() {
     touchCheck();
     ButtonTouchCheck();
   } else {
+    fill(255);
+    textSize(500);
+    textSize(30);
+    text("Background-Music: ", width-350, 50);
+    text("Sound-Effects: ", width-350, 110);
+    BgMusicSwitch.show();
+    SoundEffectsSwitch.show();
+    backgroundMusicAmp = BgMusicSwitch.timer;
     if (everythingLoaded) {
-      touchCheck();
-      playSound(background1, 0.2);
-      LevelX.show();
-      SkipRight.show();
-      SkipLeft.show();
+      try {
+        try {
+          playBackgroundMusic();
+        }
+        catch(Exception e2) {
+          println("Error in Draw() while playing background - music: ");
+          println(e2);
+        }
+        touchCheck();
+        LevelX.show();
+        SkipRight.show();
+        SkipLeft.show();
+      }
+      catch(Exception e) {
+        println("Error in Draw() while displaying UI and playing background - music: ");
+        println(e);
+      }
     } else {
-      playSound(loading, 0.7);
+      playSound(loading, 0.7*SoundEffectsSwitch.timer);
       fill(255-loaded*2.55, loaded*2.55, 0);
       textSize(200);
       text(loaded+"%", width/2-180, height/2+67);
@@ -160,6 +191,9 @@ void ButtonTouchCheck() {
       }
       if (Up.touch(int(touches[i].x), int(touches[i].y))) {
         player.jump();
+        if (editModeOn) {
+          player.vy -= speed;
+        }
       }
     }
   }
@@ -269,9 +303,9 @@ void showEditMode() {
       break;
     }
     if (img != null) {
-      image(img, blockSize/2, height - blockSize, blockSize/2, blockSize/2);
+      image(img, blockSize*2, blockSize, blockSize, blockSize);
     }
-    image(imgGlow, blockSize/4, height - blockSize-blockSize/4, blockSize, blockSize);
+    image(imgGlow, blockSize*2-blockSize/2, blockSize-blockSize/2, blockSize*2, blockSize*2);
   }
 }
 
@@ -442,10 +476,10 @@ void click(boolean touch) {
     //if (touch == false) {
     //println("click(): "+getFigureAt(cam.getInWorldCoord(mouseX, mouseY)).getClass());
     //}
-    if (editModeOn && Edit.touch() == false && Exit.touch() == false && Right.touch() == false && Left.touch() == false&& Up.touch() == false) {
-      if (editMode != "remove" && Left.touch() == false && Right.touch() == false && Up.touch() == false) {
+    if (editModeOn && Edit.touch() == false && Exit.touch() == false && Right.touch() == false && Left.touch() == false&& Up.touch() == false && SwitchEdit.touch() == false) {
+      if (editMode != "remove") {
         addFigure(editMode, int(cam.getInWorldCoordBlock(mouseX, mouseY).x), int(cam.getInWorldCoordBlock(mouseX, mouseY).y), 1, 1);
-        playSound(click, 0.5, true);
+        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
         //updateIDs();
       } else {
         Figure f = getFigureAt(cam.getInWorldCoord(mouseX, mouseY));
@@ -454,52 +488,73 @@ void click(boolean touch) {
           removeFigure(f.id);
           updateIDs();
           println("click(): Figure removed");
-          playSound(click, 0.5, true);
+          playSound(click, 0.5*SoundEffectsSwitch.timer, true);
         } else {
           println("click(): RemoveFigure: No Figure at this position found!");
         }
       }
     }
+    if (SwitchEdit.touch() &&(mouseButton==LEFT || touch)) {
+      if (editModeOn) {
+        if (editModeInt < 6) {
+          editModeInt++;
+        } else {
+          editModeInt = 0;
+        }
+        updateEditMode();
+      }
+    }
     if (Edit.touch()&&(mouseButton==LEFT || touch)) {
       editModeOn = !editModeOn;
       Edit.pictureChange();
+      playSound(click, 0.7*SoundEffectsSwitch.timer, true);
       playSound(click, 0.7, true);
     }
     if (Exit.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
       inGame = false;
+      BgMusicSwitch.hitbox = true;
+      SoundEffectsSwitch.hitbox = true;
       cam.x = 0;
       cam.y = 0;
       println("keyReleased(): Left Game, level: "+level);
-      playSound(tabChange, 0.7, true);
+      playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
       particles.removeAll(particles);
-    }
-  } else if (everythingLoaded) {
-    coinAnimation(mouseX, mouseY);
-    playSound(collectCoin, 0.2, true);
-    if (LevelX.touch()&&(mouseButton==LEFT || touch)) {
-      println("click(): Button pressed: Start Level "+level);
-      inGame = true;
-      particles.clear();
-      particles.removeAll(particles);
-      startLevel(level);
-      playSound(tabChange, 0.7, true);
-    }
-    if (SkipRight.touch()&&(mouseButton==LEFT || touch)) {
-      println("click(): Button pressed: SkipRight: "+level);
-      level++;
-      LevelX.img = levelXImage(level);
-      playSound(click, 0.7, true);
-    }
-    if (SkipLeft.touch()&&(mouseButton==LEFT || touch)) {
-      if (level > 1) {
-        level--;
-        LevelX.img = levelXImage(level);
-        println("click(): Button pressed: SkipLeft: "+level);
-      }
-      playSound(click, 0.7, true);
     }
   } else {
-    coinAnimation(mouseX, mouseY);
+    if (BgMusicSwitch.touch()&&(mouseButton==LEFT || touch)) {
+      BgMusicSwitch.clickEvent();
+    }
+    if (SoundEffectsSwitch.touch()&&(mouseButton==LEFT || touch)) {
+      SoundEffectsSwitch.clickEvent();
+    }
+    if (everythingLoaded) {
+      coinAnimation(mouseX, mouseY);
+      playSound(collectCoin, 0.2*SoundEffectsSwitch.timer, true);
+      if (LevelX.touch()&&(mouseButton==LEFT || touch)) {
+        println("click(): Button pressed: Start Level "+level);
+        inGame = true;
+        particles.clear();
+        particles.removeAll(particles);
+        startLevel(level);
+        playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
+      }
+      if (SkipRight.touch()&&(mouseButton==LEFT || touch)) {
+        println("click(): Button pressed: SkipRight: "+level);
+        level++;
+        LevelX.img = levelXImage(level);
+        playSound(click, 0.7*SoundEffectsSwitch.timer, true);
+      }
+      if (SkipLeft.touch()&&(mouseButton==LEFT || touch)) {
+        if (level > 1) {
+          level--;
+          LevelX.img = levelXImage(level);
+          println("click(): Button pressed: SkipLeft: "+level);
+        }
+        playSound(click, 0.7*SoundEffectsSwitch.timer, true);
+      }
+    } else {
+      coinAnimation(mouseX, mouseY);
+    }
   }
 }
 
@@ -536,26 +591,26 @@ void keyReleased() {
   if (key == 'r') {
     loadImages();
   }
-  if (key == 'b') {
-    editMode = "wall";
+  if (key == 'b' || key == '1') {
+    editModeInt = 1;
   }
-  if (key == 'n') {
-    editMode = "spike";
+  if (key == 'n' || key == '2') {
+    editModeInt = 2;
   }
-  if (key == 'm') {
-    editMode = "slime";
+  if (key == 'm' || key == '3') {
+    editModeInt = 3;
   }
-  if (key == ',') {
-    editMode = "remove";
+  if (key == ',' || key == '0') {
+    editModeInt = 0;
   }
-  if (key == 'c') {
-    editMode = "coin";
+  if (key == 'c' || key == '6') {
+    editModeInt = 6;
   }
-  if (key == 'v') {
-    editMode = "checkpoint";
+  if (key == 'v' || key == '5') {
+    editModeInt = 5;
   }
-  if (key == 'h') {
-    editMode = "goal";
+  if (key == 'h' || key == '4') {
+    editModeInt = 4;
   }
   if (key == 'g') {
     gravity = !gravity;
@@ -567,10 +622,19 @@ void keyReleased() {
   if (key == ENTER) {
     if (inGame) {
       inGame = false;
+      BgMusicSwitch.hitbox = true;
+      SoundEffectsSwitch.hitbox = true;
       cam.x = 0;
       cam.y = 0;
       println("keyReleased(): Left Game, level: "+level);
       particles.removeAll(particles);
+    } else {
+      inGame = true;
+      BgMusicSwitch.hitbox = false;
+      SoundEffectsSwitch.hitbox = false;
+      particles.removeAll(particles);
+      startLevel(level);
+      playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
     }
   }
   if (key == 'u') {
@@ -579,6 +643,34 @@ void keyReleased() {
   }
 }
 
+void updateEditMode() {
+  switch(editModeInt) {
+  case 0:
+    editMode = "remove";
+    break;
+  case 1:
+    editMode = "wall";
+    break;
+  case 2:
+    editMode = "spike";
+    break;
+  case 3:
+    editMode = "slime";
+    break;
+  case 4:
+    editMode = "goal";
+    break;
+  case 5:
+    editMode = "checkpoint";
+    break;
+  case 6:
+    editMode = "coin";
+    break;
+  default:
+    editMode = "wall";
+    break;
+  }
+}
 
 //This function loads the necessary images used in the program.
 void loadImages() {
@@ -615,6 +707,10 @@ void loadImages() {
   ButtonEXIT = loadImage("ButtonEXIT.png");
   particleSlime = loadImage("particleSlime.png");
   particleCheckpoint = loadImage("particleCheckpoint.png");
+  bgSwitch=loadImage("bg.png");
+  offSwitch=loadImage("off.png");
+  onSwitch=loadImage("on.png");
+  ButtonSwitch=loadImage("ButtonSwitch.png");
   loaded = 20;
   println("loadImages(): all images loaded");
 }
@@ -659,16 +755,13 @@ void playBackgroundMusic() {
   switch(int(random(0, 2))) {
   case 0:
     if (background2.isPlaying() == false) {
-      playSound(background1, 0.5*backgroundMusicAmp);
+      playSound(background1, 0.4*backgroundMusicAmp);
     }
     break;
   case 1:
     if (background1.isPlaying() == false) {
       playSound(background2, 0.2*backgroundMusicAmp);
     }
-    break;
-  default:
-      playSound(background1, 0.5*backgroundMusicAmp);
     break;
   }
 }
@@ -679,7 +772,7 @@ void playSound(SoundFile sound, float amp, boolean multiple) {
   if (sound != null) {
     if (sound.isPlaying() == false || multiple) {
       sound.play();
-      sound.amp(amp);
+      sound.amp(amp+0.000000001);
     } else if (sound.isPlaying() == true) {
       sound.amp(amp+0.000000001);
     }
@@ -696,7 +789,7 @@ void keyListener() {
     // Check if 'w' key is pressed
     if (keysPressed['w']) {
       if (player.vy >-maxSpeed) {
-        //player.vy -= speed;
+        player.vy -= speed;
       }
     }
     // Check if 's' key is pressed

@@ -29,17 +29,17 @@ class Cam {
   }
   
   int getInWorldX(int px) {
-    return int((px + x)/gameZoom);
+    return int(((x+(px)/gameZoom)*1f)*gameZoom);
   }
   int getInWorldY(int py) {
-    return int((py + y)/gameZoom);
+    return int(((y+(py)/gameZoom)*1f)*gameZoom);
   }
 
   PVector getInWorldCoord(int px, int py) {
-    return new PVector(int((px+x)/gameZoom), int((py+y)/gameZoom));
+    return new PVector(int((x+(px)/gameZoom)*1f), int((y+(py)/gameZoom)*1f));
   }
   PVector getInWorldCoord(PVector v) {
-    return new PVector(int((v.x+x)/gameZoom), int((v.y+y)/gameZoom));
+    return new PVector(int(((x+(v.x)/gameZoom)*1f)*gameZoom), int(((y+(v.y)/gameZoom)*1f)*gameZoom));
   }
   
   int getInWorldXbyBlock(int px) {
