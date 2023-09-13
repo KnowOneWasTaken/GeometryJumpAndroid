@@ -1,6 +1,6 @@
 //This section imports the necessary sound library and declares the SoundFiles used in the program.
 import processing.sound.*;
-SoundFile click, background1, reset, jump, jumpSlime, collectCoin, goalSound, tabChange;
+SoundFile click, background1, background2, reset, jump, jumpSlime, collectCoin, goalSound, tabChange, loading;
 
 //These are variable declarations used throughout the program. They include objects such as figures, images, player, camera, and various flags and settings.
 PImage spike, wall, play, spikeGlow, slime, slimeGlow, wallGlow, remove, coin, coinGlow, checkpoint, checkpointGlow, BEditModeOn, BEditModeOff, BLevel1, BLevel1Glow, BLevel2, right, rightGlow, left, leftGlow, BLevelX, goalGlow, particleStar,
@@ -34,11 +34,13 @@ Goal go;
 
 boolean inGame = false; //indicates if the game is running (true) or if the player is in the menue (false)
 int level = 1; //selects level 1 as default
-int levelAmount = 8; //indicates how many levels there are which should not be altered by in Game editing
+int levelAmount = 9; //indicates how many levels there are which should not be altered by in Game editing
 int framesSinceStarted = 0; //counts the frames, since the player has started a level (reset by death)
+int loaded = 0;
 
 BackgroundFigure[] bgFigures = new BackgroundFigure[15]; //Figures floating in Menue
 boolean everythingLoaded = false;
+float backgroundMusicAmp = 1;
 
 //called once at launch
 void setup() {
@@ -85,18 +87,9 @@ void setup() {
 
 //called in loop: It is responsible for continuously updating and rendering the graphics and animations of the program.
 void draw() {
-
+  background(0);
   if (inGame) {
     framesSinceStarted++;
-    background(0);
-    stroke(40);
-    //int quadrat = blockSize*2;
-    //for (int i = 0; i <= width+ quadrat; i = i+quadrat) {
-    //  cam.drawLine(int(cam.x/quadrat)*quadrat+i, cam.y, int(cam.x/quadrat)*quadrat+i, cam.y + height);
-    //}
-    //for (int i = 0; i <= height +quadrat; i = i+quadrat) {
-    //  cam.drawLine(cam.x, int(cam.y/quadrat)*quadrat+i, cam.x + width, int(cam.y/quadrat)*quadrat+i);
-    //}
     cam.update();
     keyListener();
 
@@ -115,7 +108,7 @@ void draw() {
     showEditMode();
 
     //plays the background1 sound in a loop when it's loaded
-    playSound(background1, 0.2);
+    playBackgroundMusic();
     Edit.show();
     Left.show();
     Right.show();
@@ -124,14 +117,24 @@ void draw() {
     touchCheck();
     ButtonTouchCheck();
   } else {
-    background(0);
-
     if (everythingLoaded) {
       touchCheck();
       playSound(background1, 0.2);
       LevelX.show();
       SkipRight.show();
       SkipLeft.show();
+    } else {
+      playSound(loading, 0.7);
+      fill(255-loaded*2.55, loaded*2.55, 0);
+      textSize(200);
+      text(loaded+"%", width/2-180, height/2+67);
+      stroke(255);
+      fill(0, 0, 0, 0);
+      rect(width/2-200, height/2+100, 4*100, 50);
+      fill(255-loaded*2.55, loaded*2.55, 0);
+      rect(width/2-200, height/2+100, 4*loaded, 50);
+      //line(width/2,0,width/2,height);
+      //line(0,height/2,width,height/2);
     }
     backgroundAnimation();
   }
@@ -180,6 +183,7 @@ void backgroundAnimation() {
     bgFigures[i].move();
     bgFigures[i].checkPosition();
     bgFigures[i].show();
+    bgFigures[i].update();
   }
 }
 
@@ -308,26 +312,6 @@ void addFigure(String ObjectClass, int x, int y, int w, int h) {
   figure.setString("class", ObjectClass);
   figure.setInt("x", x);
   figure.setInt("y", y);
-  //switch(editMode) {
-  //case "wall":
-  //  worldFigures.add(new Box(x, y, w, h, id));
-  //  break;
-  //case "spike":
-  //  worldFigures.add(new Spike(x, y, w, h, id, 1));
-  //  break;
-  //case "slime":
-  //  worldFigures.add(new Slime(x, y, w, h, id));
-  //  break;
-  //case "coin":
-  //  worldFigures.add(new Coin(x, y, w, h, id));
-  //  break;
-  //case "checkpoint":
-  //  worldFigures.add(new Checkpoint(x, y, w, h, id));
-  //  break;
-  //case "goal":
-  //  worldFigures.add(new Goal(x, y, w, h, id));
-  //  break;
-  //}
   worldFigures.add(createFigure(ObjectClass, x, y, w, h, id));
   world.setJSONObject(id, figure);
 
@@ -491,6 +475,7 @@ void click(boolean touch) {
     }
   } else if (everythingLoaded) {
     coinAnimation(mouseX, mouseY);
+    playSound(collectCoin, 0.2, true);
     if (LevelX.touch()&&(mouseButton==LEFT || touch)) {
       println("click(): Button pressed: Start Level "+level);
       inGame = true;
@@ -588,6 +573,10 @@ void keyReleased() {
       particles.removeAll(particles);
     }
   }
+  if (key == 'u') {
+    backgroundMusicAmp = 1-backgroundMusicAmp;
+    println("Backgound Music volume set to: "+backgroundMusicAmp*100+"%");
+  }
 }
 
 
@@ -607,6 +596,7 @@ void loadImages() {
   checkpoint = loadImage("checkpoint.png");
   BEditModeOff = loadImage("BEditModeOff.png");
   BEditModeOn = loadImage("BEditModeOn.png");
+  loaded = 10;
   BLevel1 = loadImage("BLevel1.png");
   BLevel2 = loadImage("BLevel2.png");
   BLevelX = loadImage("BLevelX.png");
@@ -625,22 +615,36 @@ void loadImages() {
   ButtonEXIT = loadImage("ButtonEXIT.png");
   particleSlime = loadImage("particleSlime.png");
   particleCheckpoint = loadImage("particleCheckpoint.png");
+  loaded = 20;
   println("loadImages(): all images loaded");
 }
 
 
 //This function loads the necessary sound files used in the program.
 void loadSounds() {
+  loading = new SoundFile(this, "loading.mp3");
+  collectCoin = new SoundFile(this, "collectCoin.mp3");
+  loaded = 30;
+  background1 = new SoundFile(this, "background1.mp3");
+  loaded = 60;
   click = new SoundFile(this, "click interface.mp3");
   reset = new SoundFile(this, "reset.mp3");
-  background1 = new SoundFile(this, "background1.mp3");
+  loaded = 70;
   jump = new SoundFile(this, "jump.mp3");
   jumpSlime = new SoundFile(this, "jumpSlime.mp3");
-  collectCoin = new SoundFile(this, "collectCoin.mp3");
+  loaded = 80;
+  background2 = new SoundFile(this, "background2.mp3");
+  loaded = 90;
   goalSound = new SoundFile(this, "goal.mp3");
   tabChange = new SoundFile(this, "tabChange.mp3");
+  loaded = 100;
   println("loadSounds(): all sounds loaded");
   everythingLoaded = true;
+  loading.pause();
+}
+
+void playSound(SoundFile sound, boolean multiple) {
+  playSound(sound, 1, multiple);
 }
 
 void playSound(SoundFile sound) {
@@ -651,6 +655,24 @@ void playSound(SoundFile sound, float amp) {
   playSound(sound, amp, false);
 }
 
+void playBackgroundMusic() {
+  switch(int(random(0, 2))) {
+  case 0:
+    if (background2.isPlaying() == false) {
+      playSound(background1, 0.5*backgroundMusicAmp);
+    }
+    break;
+  case 1:
+    if (background1.isPlaying() == false) {
+      playSound(background2, 0.2*backgroundMusicAmp);
+    }
+    break;
+  default:
+      playSound(background1, 0.5*backgroundMusicAmp);
+    break;
+  }
+}
+
 
 //This plays a SoundFile with specified volume ('amp'). If 'multiple' is true, it plays the sound again, even when this sound is already playing (multiple times at the same time)
 void playSound(SoundFile sound, float amp, boolean multiple) {
@@ -658,6 +680,8 @@ void playSound(SoundFile sound, float amp, boolean multiple) {
     if (sound.isPlaying() == false || multiple) {
       sound.play();
       sound.amp(amp);
+    } else if (sound.isPlaying() == true) {
+      sound.amp(amp+0.000000001);
     }
   }
 }
