@@ -36,7 +36,7 @@ class Hitbox {
     strokeWeight(2);
   }
 
-//returns true, if the specified hitbox is within the hitbox of itself
+  //returns true, if the specified hitbox is within the hitbox of itself
   boolean overlap(Hitbox h) {
     if (h.x2 > x1 && h.x1 < x2) {
       if (h.y3 > y1 && h.y1 < y3) {
@@ -52,15 +52,11 @@ class Hitbox {
     if (overlap(h)) {
       //boolean[] corners = findCornerInHitbox(h);
 
-      int oben = h.y1 - y1;
-      int unten = y3 - h.y3;
-      int rechts = x2 - h.x2;
-      int links = h.x1 - x1;
       int[] dist = new int[4];
-      dist[0] = oben;
-      dist[1] = unten;
-      dist[2] = rechts;
-      dist[3] = links;
+      dist[0] = h.y1 - y1;
+      dist[1] = y3 - h.y3;
+      dist[2] = x2 - h.x2;
+      dist[3] = h.x1 - x1;
       int[] richtung = new int[4];
       richtung[0] = 0;
       richtung[1] = 1;
@@ -124,8 +120,8 @@ class Hitbox {
     return corners;
   }
 
-  boolean pointInHitbox(int x, int y) {
-    return x > x1 && x < x2 && y > y1 && y < y3;
+  boolean pointInHitbox(int px, int py) {
+    return px > x1 && px < x2 && py > y1 && py < y3;
   }
 
   boolean pointInHitbox(PVector v) {

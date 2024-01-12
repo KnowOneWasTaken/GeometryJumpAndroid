@@ -241,12 +241,6 @@ void startLevel(int lvl) {
     case 0:
       fileName = "world";
       break;
-    case 1:
-      fileName = "level1";
-      break;
-    case 2:
-      fileName = "level2";
-      break;
     default:
       fileName = "level"+level;
       break;
@@ -507,8 +501,10 @@ void click(boolean touch) {
     if (Edit.touch()&&(mouseButton==LEFT || touch)) {
       editModeOn = !editModeOn;
       Edit.pictureChange();
+      player.vx = 0;
+      player.vy = 0;
       playSound(click, 0.7*SoundEffectsSwitch.timer, true);
-      playSound(click, 0.7, true);
+      //playSound(click, 0.7, true);
     }
     if (Exit.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
       inGame = false;
