@@ -73,7 +73,7 @@ class SwitchButton {
       Click = smallClick;
     }
     pic=bg;
-    if (touch()) {
+    if (touch() && touch) {
       tint(150, 150, 200);
       if (mousePressed || touch) {
         if (groesse<Click) {

@@ -41,7 +41,7 @@ class Particle {
       rotate(-rotation/(2.0*PI));
       translate((+cam.x-x)*gameZoom, (+cam.y-y)*gameZoom);
     }
-    tint(255, 255);
+    noTint();
   }
 
 

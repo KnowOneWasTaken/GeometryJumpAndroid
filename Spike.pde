@@ -45,6 +45,7 @@ class Spike extends Wall {
       }
     }
   }
+
   @Override void showGlow() {
     for (int i = 0; i < blockW; i++) {
       for (int j = 0; j < blockH; j++) {

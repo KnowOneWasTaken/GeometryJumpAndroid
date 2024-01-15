@@ -3,8 +3,8 @@ class Player extends Figure {
   float x, y, w, h;
   int blockX, blockY;
   PVector checkpointBlock = new PVector(0, -1);
-  int stepsX = 0;
-  int stepsY = 0;
+  //int stepsX = 0;
+  //int stepsY = 0;
   ArrayList<Figure> nearbyFigures = new ArrayList<Figure>();
 
   Player(int x, int y, int w, int h) {
@@ -15,8 +15,8 @@ class Player extends Figure {
     this.h = h;
     grounded = false;
     checkpointBlock = new PVector(0, -1);
-    this.stepsX = 0;
-    this.stepsY = 0;
+    //this.stepsX = 0;
+    //this.stepsY = 0;
   }
 
   void gravity() {
@@ -29,18 +29,19 @@ class Player extends Figure {
   }
 
   void resetToCheckpoint(boolean animation) {
+    resetToCheckpoint(animation, int(x), int(y));
+  }
+
+  void resetToCheckpoint(boolean animation, int px, int py) {
+    if (animation) {
+      deathAnimation(int(px), int(py));
+    }
     if (getFigureAt(int(checkpointBlock.x*blockSize+blockSize/2), int(checkpointBlock.y*blockSize+blockSize+blockSize/2)).getClass() == ch.getClass()) {
-      if (animation) {
-        deathAnimation(int(x+w/2), int(y+h/2));
-      }
       player.x = checkpointBlock.x*blockSize;
       player.y = (checkpointBlock.y)*blockSize;
       println("Player: resetToCheckpoint(): Player got reset to Checkpoint");
     } else {
       println("Player: resetToCheckpoint(): Checkpoint not found: Player got reset to default");
-      if (animation) {
-        deathAnimation(int(x+w/2), int(y+h/2));
-      }
       framesSinceStarted = 0;
       player.x = 0;
       player.y = -blockSize;
@@ -76,23 +77,27 @@ class Player extends Figure {
     //displays data on the top left corner
     //if (editModeOn) {
     int text = 4;
-    fill(255);
-    textSize(10*text);
-    noStroke();
-    text(int(grounded), 10*text, 10*text);
-    text("vx: "+vx, 10*text, 22*text, 10*text);
-    text("vy: "+vy, 10*text, 34*text, 10*text);
-    text("x: "+x, 10*text, (22+24)*text, 10*text);
-    text("y: "+y, 10*text, (34+24)*text, 10*text);
-    text("mouseX: "+cam.getInWorldX(mouseX), 10*text, (22+24+24)*text, 10*text);
-    text("mouseY: "+cam.getInWorldY(mouseY), 10*text, (34+24+24)*text, 10*text);
-    text("BlockX: "+cam.getInWorldCoordBlock(mouseX, mouseY).x, 10*text, (22+24+24+24)*text, 10*text);
-    text("BlockY: "+cam.getInWorldCoordBlock(mouseX, mouseY).y, 10*text, (34+24+24+24)*text, 10*text);
-    text("editModeOn: "+editModeOn, 10*text, (22+24+24+24+24)*text, 10*text);
-    text("gravity: "+gravity, 10*text, (34+24+24+24+24)*text, 10*text);
-    text("Coins collected: "+coinsCollected, 10*text, (34+24+24+24+24+12)*text, 10*text);
-    text("StepsX: "+stepsX, 10*text, (34+24+24+24+24+12+12)*text, 10*text);
-    text("StepsY: "+stepsY, 10*text, (34+24+24+24+24+12+12+12)*text, 10*text);
+    if (debug || editModeOn) {
+      fill(255);
+      textSize(10*text);
+      noStroke();
+      text("grounded: "+grounded, 10*text, 10*text);
+      text("vx: "+vx, 10*text, 22*text, 10*text);
+      text("vy: "+vy, 10*text, 34*text, 10*text);
+      text("x: "+x, 10*text, (22+24)*text, 10*text);
+      text("y: "+y, 10*text, (34+24)*text, 10*text);
+      text("mouseX: "+cam.getInWorldX(mouseX), 10*text, (22+24+24)*text, 10*text);
+      text("mouseY: "+cam.getInWorldY(mouseY), 10*text, (34+24+24)*text, 10*text);
+      text("BlockX: "+cam.getInWorldCoordBlock(mouseX, mouseY).x, 10*text, (22+24+24+24)*text, 10*text);
+      text("BlockY: "+cam.getInWorldCoordBlock(mouseX, mouseY).y, 10*text, (34+24+24+24)*text, 10*text);
+      text("editModeOn: "+editModeOn, 10*text, (22+24+24+24+24)*text, 10*text);
+      text("Coins collected: "+coinsCollected, 10*text, (34+24+24+24+24)*text, 10*text);
+      if (editModeOn) {
+        text("gravity: "+gravity, 10*text, (34+24+24+24+24+12)*text, 10*text);
+      }
+    }
+    //text("StepsX: "+stepsX, 10*text, (34+24+24+24+24+12+12)*text, 10*text);
+    //text("StepsY: "+stepsY, 10*text, (34+24+24+24+24+12+12+12)*text, 10*text);
     //}
   }
 
@@ -158,15 +163,11 @@ class Player extends Figure {
         if (f.hitbox.solid == false) {
           if (f.getClass() == s.getClass()) { //if player touches spikes
             if (editModeOn == false) {
-              resetToCheckpoint(true);
+              resetToCheckpoint(true, int(f.x+f.w/2f), int(f.y+f.h/2f));
             }
           }
           if (f.getClass() == co.getClass()&& editModeOn == false) { //if player touches a coin
-            playSound(collectCoin, 0.7*SoundEffectsSwitch.timer, true);
-            coinAnimation(int(f.x+f.w/2), int(f.y+f.h));
             delID = f.id;
-            println("Player: hitbox(): Coin collected");
-            coinsCollected++;
           }
         } else {
           PVector move = f.hitbox.findNearestExit(hitbox);
@@ -211,9 +212,13 @@ class Player extends Figure {
           move(move.x, move.y);
         }
       }
-      if (delID!= -1 && editModeOn == false) { //removes a Coin when you are not in editMode
-        removeFigure(delID);
-      }
+    }
+    if (delID!= -1 && editModeOn == false) { //removes a Coin when you are not in editMode
+      coinAnimation(int(worldFigures.get(delID).x+worldFigures.get(delID).w/2), int(worldFigures.get(delID).y+worldFigures.get(delID).h));
+      removeFigure(delID);
+      coinsCollected++;
+      playSound(collectCoin, 0.7*SoundEffectsSwitch.timer, true);
+      println("Player: hitbox(): Coin collected");
     }
   }
 
@@ -231,23 +236,23 @@ class Player extends Figure {
               println("times.json loaded");
             }
             catch(Exception e2) {
-              println("Error in: Player: hitbox(): ");
+              println("Error in: Player: checkpoint(): ");
               println("Exception 2: "+e2);
               levelTimes = new JSONObject();
               levelTimes.setInt("frames", 2147483647);
             }
             levelTimes.setInt("level", level);
             int frames = levelTimes.getInt("frames");
-            println("Player: hitbox(): frames Count in times.json found");
+            println("Player: checkpoint(): frames Count in times.json found");
             if (framesSinceStarted < frames) {
               levelTimes.setInt("frames", framesSinceStarted);
               times.setJSONObject(level, levelTimes);
               saveJSONArray(times, "times.json");
-              println("Player: hitbox(): JSONArray for Times saved");
+              println("Player: checkpoint(): JSONArray for Times saved");
             }
           }
           catch(Exception e) {
-            println("Error in: Player: hitbox(): ");
+            println("Error in: Player: checkpoint(): ");
             println(e);
             JSONArray times = new JSONArray();
             levelTimes = new JSONObject();
@@ -255,13 +260,13 @@ class Player extends Figure {
             levelTimes.setInt("level", level);
             times.setJSONObject(level, levelTimes );
             saveJSONArray(times, "times.json");
-            println("Player: hitbox(): New times.json made");
+            println("Player: checkpoint(): New times.json made");
           }
           delay(2000);
           inGame = false;
           cam.x = 0;
           cam.y = 0;
-          println("keyReleased(): Left Game, level: "+level);
+          println("checkpoint(): Left Game, level: "+level);
           BgMusicSwitch.hitbox = true;
           SoundEffectsSwitch.hitbox = true;
           playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
@@ -269,7 +274,7 @@ class Player extends Figure {
           LevelX.img = levelXImage(level);
         } else {
           checkpointBlock = new PVector(int(f.x/blockSize), int((f.y/blockSize)-1));
-          println("Player: hitbox(): Checkpoint reached: "+checkpointBlock.x + ", "+checkpointBlock.y+ "; Vector: "+new PVector(int(f.x/blockSize), int((f.y/blockSize)-1)));
+          println("Player: checkpoint(): Checkpoint reached: "+checkpointBlock.x + ", "+checkpointBlock.y+ "; Vector: "+new PVector(int(f.x/blockSize), int((f.y/blockSize)-1)));
           playSound(collectCoin, 0.5*SoundEffectsSwitch.timer, true);
           checkpointAnimation(int(x+w/2), int(y+h));
         }

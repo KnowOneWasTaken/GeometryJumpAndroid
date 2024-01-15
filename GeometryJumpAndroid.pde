@@ -44,6 +44,8 @@ BackgroundFigure[] bgFigures = new BackgroundFigure[20]; //Figures floating in M
 boolean everythingLoaded = false;
 float backgroundMusicAmp = 1;
 
+boolean debug = true;
+
 //called once at launch
 void setup() {
   fullScreen(P2D);
@@ -118,7 +120,7 @@ void draw() {
       SwitchEdit.show();
     }
 
-    //plays the background1 sound in a loop when it's loaded
+    //plays the background1/2 sound in a loop when it's loaded
     playBackgroundMusic();
     Edit.show();
     Left.show();
@@ -171,6 +173,28 @@ void draw() {
   }
   for (int i = 0; i < particles.size(); i++) {
     particles.get(i).update();
+  }
+
+  if (debug) {
+    int text = 4;
+    fill(255);
+    textSize(10*text);
+    noStroke();
+    text("touch: "+touch, 10*text, height-10*text);
+    for (int i = 0; i < touches.length; i++) {
+      fill(255);
+      textSize(10*text);
+      noStroke();
+      text("touches["+i+"]: "+touches[i].x+", "+touches[i].y, 10*text, height-(10*text+12*text*(i+1)));
+      fill(255,0,0);
+      stroke(255,0,0);
+      line(touches[i].x-5*text,touches[i].y-5*text,touches[i].x+5*text,touches[i].y+5*text);
+      line(touches[i].x+5*text,touches[i].y-5*text,touches[i].x-5*text,touches[i].y+5*text);
+      stroke(255);
+      fill(0,0,0,0);
+      ellipseMode(CENTER);
+      circle(touches[i].x,touches[i].y,120);
+    }
   }
 }
 
@@ -225,35 +249,6 @@ void setupBGAnimation() {
   for (int i = 0; i < bgFigures.length; i++) {
     int size = int(random(20, 70));
     bgFigures[i] = new BackgroundFigure(int(random(0, width)), int(random(0, height)), size, size);
-  }
-}
-
-void startLevel(int lvl) {
-  world = new JSONArray();
-  worldFigures.clear();
-  coinsCollected = 0;
-  println("startLevel(): world and worldFigures cleared");
-  player.checkpointBlock = new PVector(0, -1);
-  player.resetToCheckpoint(false);
-  try { // trys to load the world.json file
-    String fileName = "";
-    switch (lvl) {
-    case 0:
-      fileName = "world";
-      break;
-    default:
-      fileName = "level"+level;
-      break;
-    }
-    println("startLevel(): Try to load "+fileName);
-    reloadFigures(fileName);
-    updateIDs();
-  }
-  catch(Exception e) { //if the file could'nt be loaded: adds one block beneath the player
-    println("startLevel(): No world map found");
-    world = new JSONArray();
-    addFigure("wall", 0, 0, 1, 1);
-    saveJSONArray(world, "level"+lvl+".json");
   }
 }
 
@@ -320,7 +315,7 @@ Figure createFigure(String ObjectClass, int x, int y, int w, int h, int id) {
   case "goal":
     return new Goal(x, y, w, h, id);
   default:
-    println("createFigure(): Error: ObjectClass coujld'nt be resolved");
+    println("createFigure(): Error: ObjectClass could'nt be resolved");
     return new Figure(0, 0, 0, 0, -1);
   }
 }
@@ -372,46 +367,41 @@ void removeFigure(int id) {
     world.remove(id);
     worldFigures.remove(id);
     saveJSONArray(world, "world.json");
-    updateIDs();
+    reloadFigures("world");
   }
   catch(Exception e) {
     println("removeFigure(): Error while removing a Figure: id: "+id+", worldFigures.size():"+worldFigures.size());
     println("removeFigure(): Error catched:");
     println(e);
-    updateIDs();
+    reloadFigures("world");
   }
 }
 
-
-//This function updates the IDs of the figures in the world JSONArray. It is called after a figure is removed to ensure the IDs remain sequential.
-void updateIDs() {
-  JSONArray temp = loadJSONArray("world.json");
-
-  for (int i = 0; i < temp.size(); i++) {
-    JSONObject jsn = temp.getJSONObject(i);
-    jsn.setInt("id", i);
-  }
-  world = temp;
-  try {
-    saveJSONArray(temp, "world.json");
-  }
-  catch(Exception e) {
-    println("Error in updateIDs(): could'nt save temp into world.json");
-    println(e);
-    println("After a delay, it will try again");
-    delay(500);
-    try {
-      saveJSONArray(temp, "world.json");
+void startLevel(int lvl) {
+  coinsCollected = 0;
+  println("startLevel(): world and worldFigures cleared");
+  player.checkpointBlock = new PVector(0, -1);
+  player.resetToCheckpoint(false);
+  try { // trys to load the world.json file
+    String fileName = "";
+    switch (lvl) {
+    case 0:
+      fileName = "world";
+      break;
+    default:
+      fileName = "level"+level;
+      break;
     }
-    catch(Exception e2) {
-      println("Error in updateIDs(): could'nt save temp into world.json after delay");
-      println(e2);
-    }
+    println("startLevel(): Try to load "+fileName);
+    reloadFigures(fileName);
   }
-  println("updateIDs(): updated IDs into world and world.json");
-  reloadFigures("world");
+  catch(Exception e) { //if the file could'nt be loaded: adds one block beneath the player
+    println("startLevel(): No world map found");
+    world = new JSONArray();
+    addFigure("wall", 0, 0, 1, 1);
+    saveJSONArray(world, "level"+lvl+".json");
+  }
 }
-
 
 //This function reloads the figures from the world.json file into the worldFigures ArrayList. It is called at the start of the program and after updating the IDs.
 void reloadFigures(String fileName) {
@@ -419,6 +409,29 @@ void reloadFigures(String fileName) {
     world = new JSONArray();
     world = loadJSONArray(fileName+".json");
     println("reloadFigures(): world cleared and then loaded "+fileName+" into world");
+
+    for (int i = 0; i < world.size(); i++) {
+      JSONObject jsn = world.getJSONObject(i);
+      jsn.setInt("id", i);
+    }
+
+    try {
+      saveJSONArray(world, "world.json");
+    }
+    catch(Exception e2) {
+      println("Error in reloadFigures(): could'nt save temp into world.json");
+      println(e2);
+      println("After a delay, it will try again");
+      delay(500);
+      try {
+        saveJSONArray(world, "world.json");
+      }
+      catch(Exception e3) {
+        println("Error in reloadFigures(): could'nt save temp into world.json after delay");
+        println(e3);
+      }
+    }
+    println("reloadFigures(): updated IDs into world and world.json");
   }
   catch(Exception e) {
     println("reloadFigures(): World-File not found: "+fileName);
@@ -426,23 +439,24 @@ void reloadFigures(String fileName) {
     world = new JSONArray();
     worldFigures.clear();
     addFigure("wall", 0, 0, 1, 1);
-  }
-  try {
-    saveJSONArray(world, "world.json");
-  }
-  catch(Exception e) {
-    println("Error in reloadFigures() while saving world into world.json");
-    println(e);
-    delay(500);
+
     try {
       saveJSONArray(world, "world.json");
+      println("reloadFigures(): New generated empty world saved as world.json");
     }
     catch(Exception e2) {
-      println("Couldn't save world after delay loading time");
+      println("Error in reloadFigures() while saving world into world.json");
       println(e2);
+      delay(500);
+      try {
+        saveJSONArray(world, "world.json");
+      }
+      catch(Exception e3) {
+        println("Couldn't save world after delay loading time");
+        println(e3);
+      }
     }
   }
-  println("reloadFigures(): world saved as world.json");
   worldFigures.clear();
   println("reloadFigures(): worldFigures cleard");
   for (int i = 0; i < world.size(); i++) {
@@ -472,15 +486,17 @@ void click(boolean touch) {
     //}
     if (editModeOn && Edit.touch() == false && Exit.touch() == false && Right.touch() == false && Left.touch() == false&& Up.touch() == false && SwitchEdit.touch() == false) {
       if (editMode != "remove") {
-        addFigure(editMode, int(cam.getInWorldCoordBlock(mouseX, mouseY).x), int(cam.getInWorldCoordBlock(mouseX, mouseY).y), 1, 1);
-        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
-        //updateIDs();
+        Figure f = getFigureAt(cam.getInWorldCoord(mouseX, mouseY));
+        if (f.id == -1) {
+          addFigure(editMode, int(cam.getInWorldCoordBlock(mouseX, mouseY).x), int(cam.getInWorldCoordBlock(mouseX, mouseY).y), 1, 1);
+          playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+          //updateIDs();
+        }
       } else {
         Figure f = getFigureAt(cam.getInWorldCoord(mouseX, mouseY));
         if (f.id != -1) {
           println("click(): Trying to remove Figure, id: "+f.id);
           removeFigure(f.id);
-          updateIDs();
           println("click(): Figure removed");
           playSound(click, 0.5*SoundEffectsSwitch.timer, true);
         } else {
@@ -504,7 +520,6 @@ void click(boolean touch) {
       player.vx = 0;
       player.vy = 0;
       playSound(click, 0.7*SoundEffectsSwitch.timer, true);
-      //playSound(click, 0.7, true);
     }
     if (Exit.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
       inGame = false;
@@ -684,11 +699,11 @@ void loadImages() {
   checkpoint = loadImage("checkpoint.png");
   BEditModeOff = loadImage("BEditModeOff.png");
   BEditModeOn = loadImage("BEditModeOn.png");
-  loaded = 10;
   BLevel1 = loadImage("BLevel1.png");
   BLevel2 = loadImage("BLevel2.png");
   BLevelX = loadImage("BLevelX.png");
   BLevel1Glow = loadImage("BLevel1Glow.png");
+  loaded = 10;
   right = loadImage("right.png");
   rightGlow = loadImage("rightGlow.png");
   left = loadImage("left.png");

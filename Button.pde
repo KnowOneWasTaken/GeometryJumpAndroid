@@ -20,6 +20,7 @@ class Button {
   boolean hitbox = true;
   boolean secondImg = false;
   color c = color(150, 150, 200);
+  color d = color(200, 150, 200);
   boolean isHovered = false, isPressed = false, wasReleased = false, wasPressed = false, isMouseRealease = false, isMousePressed = false;
   boolean glow = false;
   String print = "[Button-Libary] ";
@@ -73,7 +74,7 @@ class Button {
     }
     if (touch() && touch) {
       tint(c);
-      if (mousePressed && (mouseButton == LEFT || touch)) {
+      if (mousePressed && touch) {
         if (groesse<Click) {
           if (groesse+step<Click) {
             groesse+=step;
@@ -90,6 +91,7 @@ class Button {
           }
         }
       } else {
+        noTint();
         if (groesse<Touch) {
           if (groesse+step<Touch) {
             groesse+=step;
@@ -107,6 +109,7 @@ class Button {
         }
       }
     } else {
+      noTint();
       if (groesse<1) {
         if (groesse+step<1) {
           groesse+=step;
@@ -164,20 +167,18 @@ class Button {
 
 
   boolean touch() {
-    //if(!inGame) {
-    //  return touch(mouseX, mouseY);
-    //}
     for (int i = 0; i < touches.length; i++) {
-      if (touch(int(touches[i].x), int(touches[i].y))) {
+      if (touch(int(touches[i].x), int(touches[i].y))&& touch) {
         return true;
       }
     }
-    if (touch(mouseX, mouseY)) {
+    if (touch(mouseX, mouseY) && touch) {
       return true;
     }
 
     return false;
   }
+  
   boolean touch(int touchX, int touchY) {
     if (hitbox) {
       boolean roundB = round;
