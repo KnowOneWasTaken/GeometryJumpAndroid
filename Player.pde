@@ -140,15 +140,15 @@ class Player extends Figure {
     //}
 
     move(vx/2, vy*(blockSize/60f)/2);
-    hitbox();
+    hitbox(false);
     move(vx/2, vy*(blockSize/60f)/2);
-    hitbox();
+    hitbox(true);
     blockX = int(cam.getInWorldCoordBlock(int(x), int(y)).x);
     blockY = int(cam.getInWorldCoordBlock(int(x), int(y)).y);
     show();
   }
 
-  void hitbox() {
+  void hitbox(boolean last) {
     grounded = false;
     int delID = -1;
     //PVector move = new PVector(-vx*0.01, -vy*0.01);
@@ -213,7 +213,7 @@ class Player extends Figure {
         }
       }
     }
-    if (delID!= -1 && editModeOn == false) { //removes a Coin when you are not in editMode
+    if (delID!= -1 && editModeOn == false && last) { //removes a Coin when you are not in editMode
       coinAnimation(int(worldFigures.get(delID).x+worldFigures.get(delID).w/2), int(worldFigures.get(delID).y+worldFigures.get(delID).h));
       removeFigure(delID);
       coinsCollected++;

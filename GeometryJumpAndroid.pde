@@ -36,7 +36,7 @@ Goal go;
 
 boolean inGame = false; //indicates if the game is running (true) or if the player is in the menue (false)
 int level = 1; //selects level 1 as default
-int levelAmount = 9; //indicates how many levels there are which should not be altered by in Game editing
+static final int levelAmount = 9; //indicates how many levels there are which should not be altered by in Game editing
 int framesSinceStarted = 0; //counts the frames, since the player has started a level (reset by death)
 int loaded = 0;
 
@@ -44,7 +44,7 @@ BackgroundFigure[] bgFigures = new BackgroundFigure[20]; //Figures floating in M
 boolean everythingLoaded = false;
 float backgroundMusicAmp = 1;
 
-boolean debug = true;
+boolean debug = false;
 
 //called once at launch
 void setup() {
@@ -61,7 +61,7 @@ void setup() {
   co = new Coin();
   ch = new Checkpoint();
   go = new Goal();
-
+  
   BgMusicSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width-100, 20, 80, 40);
   SoundEffectsSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width-100, 80, 80, 40);
 
@@ -186,34 +186,34 @@ void draw() {
       textSize(10*text);
       noStroke();
       text("touches["+i+"]: "+touches[i].x+", "+touches[i].y, 10*text, height-(10*text+12*text*(i+1)));
-      fill(255,0,0);
-      stroke(255,0,0);
-      line(touches[i].x-5*text,touches[i].y-5*text,touches[i].x+5*text,touches[i].y+5*text);
-      line(touches[i].x+5*text,touches[i].y-5*text,touches[i].x-5*text,touches[i].y+5*text);
+      fill(255, 0, 0);
+      stroke(255, 0, 0);
+      line(touches[i].x-5*text, touches[i].y-5*text, touches[i].x+5*text, touches[i].y+5*text);
+      line(touches[i].x+5*text, touches[i].y-5*text, touches[i].x-5*text, touches[i].y+5*text);
       stroke(255);
-      fill(0,0,0,0);
+      fill(0, 0, 0, 0);
       ellipseMode(CENTER);
-      circle(touches[i].x,touches[i].y,120);
+      circle(touches[i].x, touches[i].y, 120);
     }
   }
 }
 
 void ButtonTouchCheck() {
   if (touch) {
-    for (int i = 0; i < touches.length; i++) {
+    for (TouchEvent.Pointer pointer : touches) {
       float speed = 2;
       float maxSpeed = 12;
-      if (Left.touch(int(touches[i].x), int(touches[i].y))) {
-        if (player.vx >-maxSpeed) {
+      if (Left.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
+        if (player.vx > -maxSpeed) {
           player.vx -= speed;
         }
       }
-      if (Right.touch(int(touches[i].x), int(touches[i].y))) {
+      if (Right.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
         if (player.vx < maxSpeed) {
           player.vx += speed;
         }
       }
-      if (Up.touch(int(touches[i].x), int(touches[i].y))) {
+      if (Up.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
         player.jump();
         if (editModeOn) {
           player.vy -= speed;
@@ -237,11 +237,11 @@ void touchStarted() {
 
 
 void backgroundAnimation() {
-  for (int i = 0; i < bgFigures.length; i++) {
-    bgFigures[i].move();
-    bgFigures[i].checkPosition();
-    bgFigures[i].show();
-    bgFigures[i].update();
+  for (BackgroundFigure bgFigure : bgFigures) {
+    bgFigure.move();
+    bgFigure.checkPosition();
+    bgFigure.show();
+    bgFigure.update();
   }
 }
 
@@ -258,10 +258,6 @@ void showEditMode() {
   if (editModeOn) {
     PImage img, imgGlow;
     switch(editMode) {
-    case "wall":
-      img = wall;
-      imgGlow = wallGlow;
-      break;
     case "spike":
       img = spike;
       imgGlow = spikeGlow;
@@ -395,7 +391,7 @@ void startLevel(int lvl) {
     println("startLevel(): Try to load "+fileName);
     reloadFigures(fileName);
   }
-  catch(Exception e) { //if the file could'nt be loaded: adds one block beneath the player
+  catch(Exception e) { //if the file couldn't be loaded: adds one block beneath the player
     println("startLevel(): No world map found");
     world = new JSONArray();
     addFigure("wall", 0, 0, 1, 1);
@@ -650,7 +646,7 @@ void keyReleased() {
   }
   if (key == 'u') {
     backgroundMusicAmp = 1-backgroundMusicAmp;
-    println("Backgound Music volume set to: "+backgroundMusicAmp*100+"%");
+    println("Background Music volume set to: "+backgroundMusicAmp*100+"%");
   }
 }
 
@@ -658,9 +654,6 @@ void updateEditMode() {
   switch(editModeInt) {
   case 0:
     editMode = "remove";
-    break;
-  case 1:
-    editMode = "wall";
     break;
   case 2:
     editMode = "spike";

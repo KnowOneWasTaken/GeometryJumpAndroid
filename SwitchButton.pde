@@ -109,6 +109,7 @@ class SwitchButton {
         }
       }
     } else {
+      noTint();
       if (groesse<1) {
         if (groesse+step<1) {
           groesse+=step;
@@ -315,7 +316,7 @@ class SwitchButton {
   }
 
   private String bl() {
-    return "[Button-Libary] ";
+    return "[Button-Library] ";
   }
 
   private void bl(String t) {

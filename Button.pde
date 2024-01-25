@@ -23,7 +23,7 @@ class Button {
   color d = color(200, 150, 200);
   boolean isHovered = false, isPressed = false, wasReleased = false, wasPressed = false, isMouseRealease = false, isMousePressed = false;
   boolean glow = false;
-  String print = "[Button-Libary] ";
+  String print = "[Button-Library] ";
 
   void update() {
     isHovered = touch() && hitbox;
@@ -62,9 +62,6 @@ class Button {
       Click = smallClick;
     }
     switch (picture) {
-    case 1:
-      pic = img;
-      break;
     case 2:
       pic = img2;
       break;
@@ -159,7 +156,6 @@ class Button {
         if (picture==2&&mousePressed==true&&touch()==false) {
           image(img3, x+w*((1-groesse)/2), y+(h*(1-groesse)/2), w-(1-groesse)*w, h-(1-groesse)*h);
         }
-      } else {
       }
     }
     noTint();
@@ -167,8 +163,8 @@ class Button {
 
 
   boolean touch() {
-    for (int i = 0; i < touches.length; i++) {
-      if (touch(int(touches[i].x), int(touches[i].y))&& touch) {
+    for (TouchEvent.Pointer pointer : touches) {
+      if (touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)) && touch) {
         return true;
       }
     }
@@ -182,20 +178,12 @@ class Button {
   boolean touch(int touchX, int touchY) {
     if (hitbox) {
       boolean roundB = round;
-      if (roundB==false) {
+      if (!roundB) {
         int r = x+widthB;
         int b=y+heightB;
-        if (touchX<r && touchX>x && touchY<b&& touchY>y) {
-          return true;
-        } else {
-          return false;
-        }
+        return (touchX<r && touchX>x && touchY<b&& touchY>y);
       } else {
-        if (dist(touchX, touchY, x+widthB/2, y+heightB/2) < widthB/2) {
-          return true;
-        } else {
-          return false;
-        }
+        return (dist(touchX, touchY, x+widthB/2, y+heightB/2) < widthB/2);
       }
     } else {
       return false;
@@ -401,14 +389,14 @@ class Button {
   void help() {
     println("_____________________________________________________________________________________________________________________________________________________________________________________________________");
     println("");
-    println("Button-Libary Help");
+    println("Button-Library Help");
     println("------------------");
     println("To create a new Button, simply make this:");
     println("Button NAME;");
     println("NAME = new Button(bigB,img,img2,help,x,y,widthB,heightB,picture,round);");
     println("NAME = new Button(boolean,PImage,PImage,boolean,int,int,int,int,int,boolean);");
     println("");
-    println("Or if you want to use the standards of this libary, you can just write:");
+    println("Or if you want to use the standards of this Library, you can just write:");
     println("NAME = new Button(image,x,y);");
     println("NAME = new Button(PImage,int,int);");
     println(" ");

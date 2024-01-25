@@ -12,10 +12,6 @@ class BackgroundFigure extends Figure {
     rotation = int(random(0, 360));
     vRotate = int(random(-20, 20));
     switch(round(random(0, 6))) {
-    case 0:
-      img = play;
-      imgGlow = null;
-      break;
     case 1:
       img = spike;
       imgGlow = spikeGlow;
