@@ -608,7 +608,7 @@ String saveJSONObjectInternal(JSONObject json, String filename) {
 void shareFile(String path) {
   File file = new File(path);
   println(this.getActivity());
-  Uri contentUri = FileProvider.getUriForFile(this.getActivity(), "BeHumble.GeometryJump", file);
+  Uri contentUri = FileProvider.getUriForFile(this.getActivity(), "philipp_schroeder.geometryjump", file);
   Intent shareIntent = new Intent();
   shareIntent.setAction(Intent.ACTION_SEND);
   shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
