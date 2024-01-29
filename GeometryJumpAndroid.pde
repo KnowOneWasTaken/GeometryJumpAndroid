@@ -1,12 +1,28 @@
 //This section imports the necessary sound library and declares the SoundFiles used in the program.
-import processing.sound.*;
+import android.content.Intent;
+import android.net.Uri;
+
+import androidx.core.content.FileProvider;
+
+import java.io.File;
+import java.util.ArrayList;
+
+import processing.core.PApplet;
+import processing.core.PGraphics;
+import processing.core.PImage;
+import processing.core.PVector;
+import processing.data.JSONArray;
+import processing.data.JSONObject;
+import processing.event.TouchEvent;
+import processing.sound.SoundFile;
+
 SoundFile click, background1, background2, reset, jump, jumpSlime, collectCoin, goalSound, tabChange, loading;
 
 //These are variable declarations used throughout the program. They include objects such as figures, images, player, camera, and various flags and settings.
 PImage spike, wall, play, spikeGlow, slime, slimeGlow, wallGlow, remove, coin, coinGlow, checkpoint, checkpointGlow, BEditModeOn, BEditModeOff, BLevel1, BLevel1Glow, BLevel2, right, rightGlow, left, leftGlow, BLevelX, goalGlow, particleStar,
-  particleWall, ButtonLEFT, ButtonRIGHT, ButtonUP, clear, ButtonEXIT, particleSlime, particleCheckpoint, bgSwitch, offSwitch, onSwitch, ButtonSwitch;
+  particleWall, ButtonLEFT, ButtonRIGHT, ButtonUP, clear, ButtonEXIT, particleSlime, particleCheckpoint, bgSwitch, offSwitch, onSwitch, ButtonSwitch, ButtonShare;
 
-Button Edit, SkipRight, SkipLeft, LevelX, Left, Right, Up, Exit, SwitchEdit;
+Button Edit, SkipRight, SkipLeft, LevelX, Left, Right, Up, Exit, SwitchEdit, Share;
 SwitchButton BgMusicSwitch, SoundEffectsSwitch;
 
 ArrayList<Particle> particles = new ArrayList<Particle>();
@@ -20,7 +36,7 @@ JSONArray world; //The json-Array that contains the figures of the environment
 JSONArray times; //contains the times (frame-Counts) in which the player has completed the levels (best scores)
 String editMode = "wall"; //default for the world-edit mode: selects box/walls as the default to add to your world in editModeOn
 int editModeInt = 1;
-boolean editModeOn = false; //idicates if the editMode is on or off
+boolean editModeOn = false; //indicates if the editMode is on or off
 boolean gravity = false; //indicates if gravity is in editModeOn active or not
 int coinsCollected = 0; //indicates how many coins the player has collected in a level
 boolean touch = false; //indicates, if a finger is on the screen or not
@@ -61,9 +77,9 @@ void setup() {
   co = new Coin();
   ch = new Checkpoint();
   go = new Goal();
-  
-  BgMusicSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width-100, 20, 80, 40);
-  SoundEffectsSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width-100, 80, 80, 40);
+
+  BgMusicSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, 20*2, 20*2, 80*2, 40*2);
+  SoundEffectsSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, 20*2, 80*2, 80*2, 40*2);
 
   cam = new Cam(0, 0, 1920, 1080);
 
@@ -76,6 +92,8 @@ void setup() {
   Right = new Button(true, ButtonRIGHT, clear, false, int(width/2+(320+50+100)*(width/1920f)), int(height-305*(height/1080f)), int(400*(width/1920f)), int(300*(height/1080f)), 1, false, true);
   Up = new Button(true, ButtonUP, clear, false, int(width/2-(300)*(width/1920f)), int(height-305*(height/1080f)), int(600*(width/1920f)), int(300*(height/1080f)), 1, false, true);
   SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-180*(width/1920f)), int(190*(height/1080f)), int(160*(width/1920f)), int(80*(height/1080f)));
+  Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(180+80+5)*(width/1920f)), int(20*(height/1080f)), int(80*(width/1920f)), int(80*(height/1080f)));
+
 
   if (height > width) {
     SkipRight = new Button(true, right, rightGlow, false, int(width/2+(550+40)*(width/1920f)), int(height/2-75*(height/1080f)), int(200*(width/1920f)), int(150*(height/1080f)), 1, false, true);
@@ -84,9 +102,11 @@ void setup() {
     Left = new Button(true, ButtonLEFT, clear, false, int(width/2+(-320-50-100-400)*(width/1920f)), int(height-205*(height/1080f)), int(400*(width/1920f)), int(200*(height/1080f)), 1, false, true);
     Right = new Button(true, ButtonRIGHT, clear, false, int(width/2+(320+50+100)*(width/1920f)), int(height-205*(height/1080f)), int(400*(width/1920f)), int(200*(height/1080f)), 1, false, true);
     Up = new Button(true, ButtonUP, clear, false, int(width/2-(300)*(width/1920f)), int(height-205*(height/1080f)), int(600*(width/1920f)), int(200*(height/1080f)), 1, false, true);
-    Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-410*(width/1920f)), int(85*(height/1080f)), int(400*(width/1920f)), int(60*(height/1080f)));
-    Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-410*(width/1920f)), int(20*(height/1080f)), int(400*(width/1920f)), int(60*(height/1080f)));
-    SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-410*(width/1920f)), int((85+20+60)*(height/1080f)), int(400*(width/1920f)), int(60*(height/1080f)));
+
+    Exit = new Button(true, ButtonEXIT, ButtonEXIT, false,           int(width-(10+140)*(width/1080f)),        int(20*(height/2400f)),           int(140*(width/1080f)), int(140*(height/2400f)));
+    Edit = new Button(true, BEditModeOff, BEditModeOn, false,        int(width-(140+10)*(width/1080f)),        int((20+140+10)*(height/2400f)),  int(140*(width/1080f)), int(140*(height/2400f)));
+    SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-(140*2+10+10)*(width/1080f)),   int((20+10+140)*(height/2400f)),  int(140*(width/1080f)), int(140*(height/2400f)));
+    Share = new Button(true, ButtonShare, ButtonShare, false,        int(width-(140*2+10*2)*(width/1080f)),    int(20*(height/2400f)),           int(140*(width/1080f)), int(140*(height/2400f)));
   }
 
   setupBGAnimation();
@@ -127,14 +147,15 @@ void draw() {
     Right.show();
     Up.show();
     Exit.show();
+    Share.show();
     touchCheck();
     ButtonTouchCheck();
   } else {
     fill(255);
     textSize(500);
-    textSize(30);
-    text("Background-Music: ", width-350, 50);
-    text("Sound-Effects: ", width-350, 110);
+    textSize(30*2);
+    text("Background-Music ", 110*2, 50*2);
+    text("Sound-Effects ", 110*2, 110*2);
     BgMusicSwitch.show();
     SoundEffectsSwitch.show();
     backgroundMusicAmp = BgMusicSwitch.timer;
@@ -288,9 +309,11 @@ void showEditMode() {
       break;
     }
     if (img != null) {
-      image(img, blockSize*2, blockSize, blockSize, blockSize);
+      image(img, blockSize*1.5, blockSize*1.5, blockSize*1.5, blockSize*1.5);
     }
-    image(imgGlow, blockSize*2-blockSize/2, blockSize-blockSize/2, blockSize*2, blockSize*2);
+    if (imgGlow != null) {
+      image(imgGlow, blockSize*1.5-blockSize*1.5/2, blockSize*1.5-blockSize*1.5/2, blockSize*2*1.5, blockSize*2*1.5);
+    }
   }
 }
 
@@ -413,6 +436,7 @@ void reloadFigures(String fileName) {
 
     try {
       saveJSONArray(world, "world.json");
+      println("reloadFigures(): Saved world (JSONArray) in world.json");
     }
     catch(Exception e2) {
       println("Error in reloadFigures(): could'nt save temp into world.json");
@@ -480,7 +504,7 @@ void click(boolean touch) {
     //if (touch == false) {
     //println("click(): "+getFigureAt(cam.getInWorldCoord(mouseX, mouseY)).getClass());
     //}
-    if (editModeOn && Edit.touch() == false && Exit.touch() == false && Right.touch() == false && Left.touch() == false&& Up.touch() == false && SwitchEdit.touch() == false) {
+    if (editModeOn && !Edit.touch() && !Exit.touch() && !Right.touch() && !Left.touch() && !Up.touch() && !SwitchEdit.touch() && !Share.touch()) {
       if (editMode != "remove") {
         Figure f = getFigureAt(cam.getInWorldCoord(mouseX, mouseY));
         if (f.id == -1) {
@@ -502,6 +526,7 @@ void click(boolean touch) {
     }
     if (SwitchEdit.touch() &&(mouseButton==LEFT || touch)) {
       if (editModeOn) {
+        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
         if (editModeInt < 6) {
           editModeInt++;
         } else {
@@ -526,6 +551,14 @@ void click(boolean touch) {
       println("keyReleased(): Left Game, level: "+level);
       playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
       particles.removeAll(particles);
+    }
+    if (Share.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
+      playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+      // Save the JSONArray file to the device's internal storage
+      String path = saveJSONArrayInternal(world, level+".json");
+
+      // Share the JSONArray file
+      shareFile(path);
     }
   } else {
     if (BgMusicSwitch.touch()&&(mouseButton==LEFT || touch)) {
@@ -563,6 +596,31 @@ void click(boolean touch) {
       coinAnimation(mouseX, mouseY);
     }
   }
+}
+
+String saveJSONObjectInternal(JSONObject json, String filename) {
+  String path = sketchPath("") + File.separator + filename;
+  saveJSONObject(json, path);
+  return path;
+}
+
+// Shares a file with the given path
+void shareFile(String path) {
+  File file = new File(path);
+  println(this.getActivity());
+  Uri contentUri = FileProvider.getUriForFile(this.getActivity(), "processing.test.geometryjumpandroid.fileprovider", file);
+  Intent shareIntent = new Intent();
+  shareIntent.setAction(Intent.ACTION_SEND);
+  shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
+  shareIntent.setType("application/json");
+  startActivity(Intent.createChooser(shareIntent, "Share JSON"));
+}
+
+// Saves a JSONArray to the device's internal storage and returns the file's path
+String saveJSONArrayInternal(JSONArray json, String filename) {
+  String path = sketchPath("") + File.separator + filename;
+  saveJSONArray(json, path);
+  return path;
 }
 
 
@@ -715,6 +773,7 @@ void loadImages() {
   offSwitch=loadImage("off.png");
   onSwitch=loadImage("on.png");
   ButtonSwitch=loadImage("ButtonSwitch.png");
+  ButtonShare = loadImage("share.png");
   loaded = 20;
   println("loadImages(): all images loaded");
 }
@@ -773,7 +832,7 @@ void playBackgroundMusic() {
 
 //This plays a SoundFile with specified volume ('amp'). If 'multiple' is true, it plays the sound again, even when this sound is already playing (multiple times at the same time)
 void playSound(SoundFile sound, float amp, boolean multiple) {
-  if (sound != null) {
+  if (sound != null && amp > 0.0001) {
     if (sound.isPlaying() == false || multiple) {
       sound.play();
       sound.amp(amp+0.000000001);

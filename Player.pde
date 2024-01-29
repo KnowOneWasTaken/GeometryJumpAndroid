@@ -77,7 +77,7 @@ class Player extends Figure {
     //displays data on the top left corner
     //if (editModeOn) {
     int text = 4;
-    if (debug || editModeOn) {
+    if (debug) {
       fill(255);
       textSize(10*text);
       noStroke();

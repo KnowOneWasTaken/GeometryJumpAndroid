@@ -129,6 +129,7 @@ class SwitchButton {
     int wid = off.width;
     int heigh =off.height;
     image(pic, x+w*((1-groesse)/2), y+(h*(1-groesse)/2), w-(1-groesse)*w, h-(1-groesse)*h);
+    tint(255, 255, 255, int(255*(timer)));
     image(on, x+w*((1-groesse)/2)+timer*((w-(1-groesse)*w)-(h-(1-groesse)*h)), (y+(h*(1-groesse)/2))-(((h-(1-groesse)*h)*(heigh) / (wid))-(h-(1-groesse)*h))/2, h-(1-groesse)*h, (h-(1-groesse)*h)*(heigh) / (wid));
     tint(255, 255, 255, int(255*(1-timer)));
     image(off, x+w*((1-groesse)/2)+timer*((w-(1-groesse)*w)-(h-(1-groesse)*h)), (y+(h*(1-groesse)/2))-(((h-(1-groesse)*h)*(heigh) / (wid))-(h-(1-groesse)*h))/2, h-(1-groesse)*h, (h-(1-groesse)*h)*(heigh) / (wid));
@@ -328,7 +329,7 @@ class SwitchButton {
       pictureChange();
     }
   }
-  
+
   void clickEvent() {
     pictureChange();
   }

@@ -1,11 +1,14 @@
-<?xml version="1.1" encoding="UTF-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="1" android:versionName="1.1">
-    <application android:icon="@mipmap/ic_launcher" android:label="GeometryJump">
+<?xml version="1.2" encoding="UTF-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:versionCode="1.2" android:versionName="1.2" package="processing.test.geometryjumpandroid">
+    <application android:icon="@mipmap/ic_launcher" android:label="GeometryJumpAndroid">
         <activity android:exported="true" android:name=".MainActivity" android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <provider android:authorities="processing.test.geometryjumpandroid.fileprovider" android:exported="false" android:grantUriPermissions="true" android:name="androidx.core.content.FileProvider">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths"/>
+        </provider>
     </application>
 </manifest>
