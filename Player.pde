@@ -195,7 +195,10 @@ class Player extends Figure {
           if (f.getClass() == sl.getClass()) {
             if (grounded) {
               vy = vy - 50;
-              playSound(jumpSlime, 0.5*SoundEffectsSwitch.timer, true);
+              if (coolDownTimer <= 0) {
+                playSound(jumpSlime, 0.5*SoundEffectsSwitch.timer, true);
+                coolDownTimer = 5;
+              }
               slimeAnimation(int(x+w/2), int(y+h));
               //println("Player: hitbox(): Slime jump");
             }

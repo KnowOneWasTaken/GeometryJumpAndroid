@@ -26,11 +26,11 @@ import java.util.ArrayList;
 
 SoundFile click, background1, background2, reset, jump, jumpSlime, collectCoin, goalSound, tabChange, loading;
 
-//These are variable declarations used throughout the program. They include objects such as figures, images, player, camera, and various flags and settings.
+//These are variable declarations used throughout the program. They include ob                                                                                                                                                           jects such as figures, images, player, camera, and various flags and settings.
 PImage spike, wall, play, spikeGlow, slime, slimeGlow, wallGlow, remove, coin, coinGlow, checkpoint, checkpointGlow, BEditModeOn, BEditModeOff, BLevel1, BLevel1Glow, BLevel2, right, rightGlow, left, leftGlow, BLevelX, goalGlow, particleStar,
-  particleWall, ButtonLEFT, ButtonRIGHT, ButtonUP, clear, ButtonEXIT, particleSlime, particleCheckpoint, bgSwitch, offSwitch, onSwitch, ButtonSwitch, ButtonShare, ButtonImport;
+  particleWall, ButtonLEFT, ButtonRIGHT, ButtonUP, clear, ButtonEXIT, particleSlime, particleCheckpoint, bgSwitch, offSwitch, onSwitch, ButtonSwitch, ButtonShare, ButtonImport, ButtonDown;
 
-Button Edit, SkipRight, SkipLeft, LevelX, Left, Right, Up, Exit, SwitchEdit, Share, Import;
+Button Edit, SkipRight, SkipLeft, LevelX, Left, Right, Up, Exit, SwitchEdit, Share, Import, Down;
 SwitchButton BgMusicSwitch, SoundEffectsSwitch;
 
 ArrayList<Particle> particles = new ArrayList<Particle>();
@@ -50,7 +50,7 @@ int coinsCollected = 0; //indicates how many coins the player has collected in a
 boolean touch = false; //indicates, if a finger is on the screen or not
 float gameZoom = 1.8; //makes the gameplay bigger (zooms in), when you are on a smartphone
 boolean useTouchScreen = false;
-int shareFileCountDown = 0;
+int coolDownTimer = 0;
 String selectedFilePath;
 
 //objects just to get their .getClass()
@@ -100,7 +100,9 @@ void setup() {
   SkipLeft = new Button(true, left, leftGlow, false, int(width/2+(-320-50-100)*(width/1920f)), int(height/2-75*(height/1080f)), int(100*(width/1920f)), int(150*(height/1080f)), 1, false, true);
   Left = new Button(true, ButtonLEFT, clear, false, int(width/2+(-320-50-100-400)*(width/1920f)), int(height-305*(height/1080f)), int(400*(width/1920f)), int(300*(height/1080f)), 1, false, true);
   Right = new Button(true, ButtonRIGHT, clear, false, int(width/2+(320+50+100)*(width/1920f)), int(height-305*(height/1080f)), int(400*(width/1920f)), int(300*(height/1080f)), 1, false, true);
-  Up = new Button(true, ButtonUP, clear, false, int(width/2-(300)*(width/1920f)), int(height-305*(height/1080f)), int(600*(width/1920f)), int(300*(height/1080f)), 1, false, true);
+  Up = new Button(true, ButtonUP, clear, false,   int(width/2-(300)*(width/1920f)), int(height-305*(height/1080f)),                                int(600*(width/1920f)), int(300*(height/1080f)), 1, false, true);
+  Down = new Button(true, ButtonUP, clear, false, int(width/2-(300)*(width/1920f)), int(height-305*(height/1080f) + (int(300*(height/1080f))/2 )), int(600*(width/1920f)), int(150*(height/1080f)), 1, false, true);
+
   SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-180*(width/1920f)), int(190*(height/1080f)), int(160*(width/1920f)), int(80*(height/1080f)));
   Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(180+80+5)*(width/1920f)), int(20*(height/1080f)), int(80*(width/1920f)), int(80*(height/1080f)));
   Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(180+80+5+180+5)*(width/1920f)), int(20*(height/1080f)), int(80*(width/1920f)), int(80*(height/1080f)));
@@ -110,16 +112,18 @@ void setup() {
     SkipRight = new Button(true, right, rightGlow, false, int(width/2+(550+40)*(width/1920f)), int(height/2-75*(height/1080f)), int(200*(width/1920f)), int(150*(height/1080f)), 1, false, true);
     SkipLeft = new Button(true, left, leftGlow, false, int(width/2-(550+40+200)*(width/1920f)), int(height/2-75*(height/1080f)), int(200*(width/1920f)), int(150*(height/1080f)), 1, false, true);
     LevelX = new Button(true, BLevelX, BLevel1Glow, false, int(width/2-(550)*(width/1920f)), int(height/2-110*(height/1080f)), int((1100)*(width/1920f)), int(220*(height/1080f)), 1, false, true);
-    Left = new Button(true, ButtonLEFT, clear, false, int(width/2+(-320-50-100-400)*(width/1920f)), int(height-205*(height/1080f)), int(400*(width/1920f)), int(200*(height/1080f)), 1, false, true);
-    Right = new Button(true, ButtonRIGHT, clear, false, int(width/2+(320+50+100)*(width/1920f)), int(height-205*(height/1080f)), int(400*(width/1920f)), int(200*(height/1080f)), 1, false, true);
-    Up = new Button(true, ButtonUP, clear, false, int(width/2-(300)*(width/1920f)), int(height-205*(height/1080f)), int(600*(width/1920f)), int(200*(height/1080f)), 1, false, true);
+    
+    Left = new Button(true, ButtonLEFT, clear, false,   int((width/2f - 400/2 - 300) * width / 1080f), int((2400-10-450) * height / 2400f), int(300*(width/1080f)), int(450*(height/2400f)), 1, false, true);
+    Right = new Button(true, ButtonRIGHT, clear, false, int((width/2f + 400/2) * width / 1080f),       int((2400-10-450) * height / 2400f), int(300*(width/1080f)), int(450*(height/2400f)), 1, false, true);
+    
+    Up = new Button(true, ButtonUP, clear, false,     int((width/2f - 400/2) * width / 1080f), int((2400-10-450) * height / 2400f),           int(400*(width/1080f)), int(450*(height/2400f)), 1, false, true);
+    Down = new Button(true, ButtonDown, clear, false, int((width/2f - 400/2) * width / 1080f), int((2400-10-450 + (450/2)) * height / 2400f), int(400*(width/1080f)), int(225*(height/2400f)), 1, false, true);
 
     Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-(10+140)*(width/1080f)), int(20*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
     Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-(140+10)*(width/1080f)), int((20+140+10)*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
     SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-(140+10)*(width/1080f)), int((20+140+10*2+140)*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
     Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(140*2+10*2)*(width/1080f)), int(20*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
     Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(140*2+10+10)*(width/1080f)), int((20+10+140)*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
-    
   }
 
   setupBGAnimation();
@@ -157,8 +161,8 @@ void draw() {
       SwitchEdit.show();
     }
 
-    if (shareFileCountDown > 0) {
-      shareFileCountDown--;
+    if (coolDownTimer > 0) {
+      coolDownTimer--;
     }
 
     //plays the background1/2 sound in a loop when it's loaded
@@ -167,6 +171,10 @@ void draw() {
     Left.show();
     Right.show();
     Up.show();
+    if (editModeOn) {
+      Down.show();
+    }
+
     Exit.show();
     Share.show();
     Import.show();
@@ -174,7 +182,6 @@ void draw() {
     ButtonTouchCheck();
   } else {
     fill(255);
-    textSize(500);
     textSize(30*2);
     text("Background-Music ", 110*2, 50*2);
     text("Sound-Effects ", 110*2, 110*2);
@@ -242,28 +249,57 @@ void draw() {
 }
 
 void ButtonTouchCheck() {
+  boolean leftT = Left.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
+  boolean rightT = Right.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
+  boolean upT = Up.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
+  boolean downT = Down.touch();
   if (touch) {
-    for (TouchEvent.Pointer pointer : touches) {
-      float speed = 2;
-      float maxSpeed = 12;
-      if (Left.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
+    //for (TouchEvent.Pointer pointer : touches) {
+    float speed = 2;
+    float maxSpeed = 12;
+    // boolean leftT = Left.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
+    //boolean rightT = Right.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
+    //boolean upT = Up.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
+    if (!editModeOn) {
+      if (leftT) {
         if (player.vx > -maxSpeed) {
           player.vx -= speed;
         }
       }
-      if (Right.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
+      if (rightT) {
         if (player.vx < maxSpeed) {
           player.vx += speed;
         }
       }
-      if (Up.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
+      if (upT) {
         player.jump();
-        if (editModeOn) {
-          player.vy -= speed;
+      }
+    } else {
+      player.vx = 0;
+      if ((rightT && !leftT) || (!rightT && leftT)) {
+        if (leftT) {
+          player.vx = -maxSpeed/1.5f;
+        }
+        if (rightT) {
+          player.vx = +maxSpeed/1.5f;
+        }
+      }
+      player.vy = 0;
+      if ((downT && !upT) || (!downT && upT)) {
+        if (upT) {
+          player.vy = -maxSpeed/1.5f;
+        }
+        if (downT) {
+          player.vy = +maxSpeed/1.5f;
         }
       }
     }
-  }
+    //}
+  } else
+    if (editModeOn) {
+      player.vy = 0;
+      player.vx = 0;
+    }
 }
 
 void touchCheck() {
@@ -526,7 +562,7 @@ void click(boolean touch) {
     //if (touch == false) {
     //println("click(): "+getFigureAt(cam.getInWorldCoord(mouseX, mouseY)).getClass());
     //}
-    if (editModeOn && !Edit.touch() && !Exit.touch() && !Right.touch() && !Left.touch() && !Up.touch() && !SwitchEdit.touch() && !Share.touch() && !Import.touch()) {
+    if (editModeOn && !Edit.touch() && !Exit.touch() && !Right.touch() && !Left.touch() && !Up.touch() && !SwitchEdit.touch() && !Share.touch() && !Import.touch() && !(editModeOn && Down.touch())) {
       if (editMode != "remove") {
         Figure f = getFigureAt(cam.getInWorldCoord(mouseX, mouseY));
         if (f.id == -1) {
@@ -558,11 +594,18 @@ void click(boolean touch) {
       }
     }
     if (Edit.touch()&&(mouseButton==LEFT || touch)) {
+      playSound(click, 0.7*SoundEffectsSwitch.timer, true);
       editModeOn = !editModeOn;
       Edit.pictureChange();
       player.vx = 0;
       player.vy = 0;
-      playSound(click, 0.7*SoundEffectsSwitch.timer, true);
+      if (editModeOn) {
+        Down.hitbox = true;
+        Up.heightB = Up.heightB/2;
+      } else {
+        Down.hitbox = false;
+        Up.heightB = Up.heightB*2;
+      }
     }
     if (Exit.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
       inGame = false;
@@ -575,25 +618,25 @@ void click(boolean touch) {
       particles.removeAll(particles);
     }
     if (Share.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
-      if (shareFileCountDown <= 0) {
+      if (coolDownTimer <= 0) {
         playSound(click, 0.5*SoundEffectsSwitch.timer, true);
         // Save the JSONArray file to the device's internal storage
         String path = saveJSONArrayInternal(world, "exportlevel"+level+".json");
 
         // Share the JSONArray file
         shareFile(path);
-        shareFileCountDown=5;
+        coolDownTimer=5;
       }
     }
     if (Import.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
-      if (shareFileCountDown <= 0) {
+      if (coolDownTimer <= 0) {
         playSound(click, 0.5*SoundEffectsSwitch.timer, true);
 
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
         intent.setType("application/json");
         ((Activity) this.getActivity()).startActivityForResult(intent, 0);
 
-        shareFileCountDown=5;
+        coolDownTimer=5;
       }
     }
   } else {
@@ -830,6 +873,7 @@ void loadImages() {
   ButtonSwitch=loadImage("ButtonSwitch.png");
   ButtonShare = loadImage("share.png");
   ButtonImport = loadImage("ButtonImport.png");
+  ButtonDown = loadImage("ButtonDOWN.png");
   loaded = 20;
   println("loadImages(): all images loaded");
 }
@@ -1021,28 +1065,29 @@ void onActivityResult(int requestCode, int resultCode, Intent data) {
       if (json == null) {
         println("Could not parse json file.");
       } else {
-              world = json;
-      try {
-        saveJSONArray(world, "world.json");
-        if (level > levelAmount) {
-          saveJSONArray(world, "level"+level+".json");
-        }
-      }
-      catch(Exception e) {
-        println("Error in onActivityResult() while saving world into world.json");
-        println(e);
-        delay(500);
+        world = json;
         try {
           saveJSONArray(world, "world.json");
+          if (level > levelAmount) {
+            saveJSONArray(world, "level"+level+".json");
+          }
         }
-        catch(Exception e2) {
-          println("Couldn't save world after delay loading time");
-          println(e2);
+        catch(Exception e) {
+          println("Error in onActivityResult() while saving world into world.json");
+          println(e);
+          delay(500);
+          try {
+            saveJSONArray(world, "world.json");
+          }
+          catch(Exception e2) {
+            println("Couldn't save world after delay loading time");
+            println(e2);
+          }
         }
+        reloadFigures("world");
       }
-      reloadFigures("world");
-      }
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       println("Error reading file: " + e.getMessage());
     }
   }
@@ -1061,12 +1106,13 @@ public static String getPath(Context context, Uri uri) {
 
 void importFile() {
   try {
-  //handles import of .json file
-  Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-  intent.setType("application/json");
-  ((Activity) this.getActivity()).startActivityForResult(intent, 0);
-  } catch(Exception e) {
-     println("Error in importFile():");
-     println(e);
+    //handles import of .json file
+    Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+    intent.setType("application/json");
+    ((Activity) this.getActivity()).startActivityForResult(intent, 0);
+  }
+  catch(Exception e) {
+    println("Error in importFile():");
+    println(e);
   }
 }

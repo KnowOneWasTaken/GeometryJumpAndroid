@@ -69,8 +69,8 @@ class Button {
       pic =img;
       break;
     }
+    tint(c);
     if (touch() && touch) {
-      tint(c);
       if (mousePressed && touch) {
         if (groesse<Click) {
           if (groesse+step<Click) {
@@ -169,16 +169,16 @@ class Button {
       }
     }
     if (touch(mouseX, mouseY) && touch) {
+      noTint();
       return true;
     }
 
     return false;
   }
-  
+
   boolean touch(int touchX, int touchY) {
     if (hitbox) {
-      boolean roundB = round;
-      if (!roundB) {
+      if (!round) {
         int r = x+widthB;
         int b=y+heightB;
         return (touchX<r && touchX>x && touchY<b&& touchY>y);
