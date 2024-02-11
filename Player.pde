@@ -39,9 +39,7 @@ class Player extends Figure {
     if (getFigureAt(int(checkpointBlock.x*blockSize+blockSize/2), int(checkpointBlock.y*blockSize+blockSize+blockSize/2)).getClass() == ch.getClass()) {
       player.x = checkpointBlock.x*blockSize;
       player.y = (checkpointBlock.y)*blockSize;
-      println("Player: resetToCheckpoint(): Player got reset to Checkpoint");
     } else {
-      println("Player: resetToCheckpoint(): Checkpoint not found: Player got reset to default");
       framesSinceStarted = 0;
       player.x = 0;
       player.y = -blockSize;
@@ -226,7 +224,7 @@ class Player extends Figure {
   }
 
   void checkpoint(Figure f) {
-    if (grounded && editModeOn == false) {
+    if (grounded && !editModeOn && !gameFinished) {
       if (int(checkpointBlock.x) != int(f.x/blockSize) || int(checkpointBlock.y) != int((f.y/blockSize)-1)) {
         if (f.getClass() == go.getClass()) {
           playSound(goalSound, 0.6*SoundEffectsSwitch.timer);
@@ -234,9 +232,10 @@ class Player extends Figure {
           JSONObject levelTimes;
           try {
             times = loadJSONArray("times.json");
+            println("player: hitbox(): times.json found and loaded");
             try {
               levelTimes = times.getJSONObject(level);
-              println("times.json loaded");
+              println("time loaded");
             }
             catch(Exception e2) {
               println("Error in: Player: checkpoint(): ");
@@ -256,7 +255,7 @@ class Player extends Figure {
           }
           catch(Exception e) {
             println("Error in: Player: checkpoint(): ");
-            println(e);
+            e.printStackTrace();
             JSONArray times = new JSONArray();
             levelTimes = new JSONObject();
             levelTimes.setInt("frames", framesSinceStarted);
@@ -265,20 +264,13 @@ class Player extends Figure {
             saveJSONArray(times, "times.json");
             println("Player: checkpoint(): New times.json made");
           }
-          delay(2000);
-          inGame = false;
-          cam.x = 0;
-          cam.y = 0;
-          println("checkpoint(): Left Game, level: "+level);
-          BgMusicSwitch.hitbox = true;
-          SoundEffectsSwitch.hitbox = true;
-          playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
-          level++;
-          LevelX.img = levelXImage(level);
+          checkpointAnimation(int(x+w/2), int(y+h));
+          gameFinished = true;
+          gameFinish();
         } else {
           checkpointBlock = new PVector(int(f.x/blockSize), int((f.y/blockSize)-1));
           println("Player: checkpoint(): Checkpoint reached: "+checkpointBlock.x + ", "+checkpointBlock.y+ "; Vector: "+new PVector(int(f.x/blockSize), int((f.y/blockSize)-1)));
-          playSound(collectCoin, 0.5*SoundEffectsSwitch.timer, true);
+          playSound(collectCoin, 0.7*SoundEffectsSwitch.timer, true);
           checkpointAnimation(int(x+w/2), int(y+h));
         }
       }

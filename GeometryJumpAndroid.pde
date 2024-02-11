@@ -1,4 +1,4 @@
-//This section imports the necessary sound library and declares the SoundFiles used in the program.
+//This section imports the necessary libraries
 
 import processing.core.PApplet;
 import processing.core.PGraphics;
@@ -15,19 +15,24 @@ import android.database.Cursor;
 import android.provider.MediaStore;
 import android.content.Intent;
 import android.net.Uri;
+import android.widget.Toast;
+import android.content.Context;
+import android.content.res.AssetFileDescriptor;
+import android.media.MediaPlayer;
+import android.content.Context;
 
 import androidx.core.content.FileProvider;
 
 import java.io.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.io.IOException;
 
+MediaPlayer click, reset, jump, jumpSlime, collectCoin, goalSound, tabChange, loading;
+MediaPlayer[] backgroundMusicPlayer;
 
-
-SoundFile click, background1, background2, reset, jump, jumpSlime, collectCoin, goalSound, tabChange, loading;
-
-//These are variable declarations used throughout the program. They include ob                                                                                                                                                           jects such as figures, images, player, camera, and various flags and settings.
-PImage spike, wall, play, spikeGlow, slime, slimeGlow, wallGlow, remove, coin, coinGlow, checkpoint, checkpointGlow, BEditModeOn, BEditModeOff, BLevel1, BLevel1Glow, BLevel2, right, rightGlow, left, leftGlow, BLevelX, goalGlow, particleStar,
+//These are variable declarations used throughout the program. They include objects such as figures, images, player, camera, and various flags and settings.
+PImage spike, wall, play, spikeGlow, slime, slimeGlow, wallGlow, remove, coin, coinGlow, checkpoint, checkpointGlow, BEditModeOn, BEditModeOff, BLevel1Glow, right, rightGlow, left, leftGlow, BLevelX, goalGlow, particleStar,
   particleWall, ButtonLEFT, ButtonRIGHT, ButtonUP, clear, ButtonEXIT, particleSlime, particleCheckpoint, bgSwitch, offSwitch, onSwitch, ButtonSwitch, ButtonShare, ButtonImport, ButtonDown;
 
 Button Edit, SkipRight, SkipLeft, LevelX, Left, Right, Up, Exit, SwitchEdit, Share, Import, Down;
@@ -62,7 +67,7 @@ Goal go;
 
 boolean inGame = false; //indicates if the game is running (true) or if the player is in the menue (false)
 int level = 1; //selects level 1 as default
-static final int levelAmount = 9; //indicates how many levels there are which should not be altered by in Game editing
+static final int levelAmount = 11; //indicates how many levels there are which should not be altered by in Game editing
 int framesSinceStarted = 0; //counts the frames, since the player has started a level (reset by death)
 int loaded = 0;
 
@@ -71,6 +76,8 @@ boolean everythingLoaded = false;
 float backgroundMusicAmp = 1;
 
 boolean debug = false;
+int backgroundMusicFilesLoaded = 0; //indicates how many of the background-music files are already loaded
+boolean gameFinished = false;
 
 //called once at launch
 void setup() {
@@ -78,7 +85,6 @@ void setup() {
   //size(480, 300);
 
   frameRate(50);
-
   loadImages();
   thread("loadSounds");
 
@@ -93,30 +99,30 @@ void setup() {
 
   cam = new Cam(0, 0, 1920, 1080);
 
-  Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-180*(width/1920f)), int(105*(height/1080f)), int(160*(width/1920f)), int(80*(height/1080f)));
-  Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-180*(width/1920f)), int(20*(height/1080f)), int(160*(width/1920f)), int(80*(height/1080f)));
-  LevelX = new Button(true, BLevelX, BLevel1Glow, false, int(width/2-320*(width/1920f)), int(height/2-220*(height/1080f)), int(640*(width/1920f)), int(440*(height/1080f)), 1, false, true);
-  SkipRight = new Button(true, right, rightGlow, false, int(width/2+(320+50)*(width/1920f)), int(height/2-75*(height/1080f)), int(100*(width/1920f)), int(150*(height/1080f)), 1, false, true);
-  SkipLeft = new Button(true, left, leftGlow, false, int(width/2+(-320-50-100)*(width/1920f)), int(height/2-75*(height/1080f)), int(100*(width/1920f)), int(150*(height/1080f)), 1, false, true);
-  Left = new Button(true, ButtonLEFT, clear, false, int(width/2+(-320-50-100-400)*(width/1920f)), int(height-305*(height/1080f)), int(400*(width/1920f)), int(300*(height/1080f)), 1, false, true);
-  Right = new Button(true, ButtonRIGHT, clear, false, int(width/2+(320+50+100)*(width/1920f)), int(height-305*(height/1080f)), int(400*(width/1920f)), int(300*(height/1080f)), 1, false, true);
-  Up = new Button(true, ButtonUP, clear, false,   int(width/2-(300)*(width/1920f)), int(height-305*(height/1080f)),                                int(600*(width/1920f)), int(300*(height/1080f)), 1, false, true);
-  Down = new Button(true, ButtonUP, clear, false, int(width/2-(300)*(width/1920f)), int(height-305*(height/1080f) + (int(300*(height/1080f))/2 )), int(600*(width/1920f)), int(150*(height/1080f)), 1, false, true);
+  LevelX = new Button(true, BLevelX, BLevel1Glow, false, int(width/2-320*(width/2400f)), int(height/2-220*(height/1080f)), int(640*(width/2400f)), int(440*(height/1080f)), 1, false, true);
+  SkipRight = new Button(true, right, rightGlow, false, int(width/2+(320+50)*(width/2400f)), int(height/2-75*(height/1080f)), int(100*(width/2400f)), int(150*(height/1080f)), 1, false, true);
+  SkipLeft = new Button(true, left, leftGlow, false, int(width/2+(-320-50-100)*(width/2400f)), int(height/2-75*(height/1080f)), int(100*(width/2400f)), int(150*(height/1080f)), 1, false, true);
+  Left = new Button(true, ButtonLEFT, clear, false, int(width/2+(-320-50-100-400)*(width/2400f)), int(height-305*(height/1080f)), int(400*(width/2400f)), int(300*(height/1080f)), 1, false, true);
+  Right = new Button(true, ButtonRIGHT, clear, false, int(width/2+(320+50+100)*(width/2400f)), int(height-305*(height/1080f)), int(400*(width/2400f)), int(300*(height/1080f)), 1, false, true);
+  Up = new Button(true, ButtonUP, clear, false, int(width/2-(300)*(width/2400f)), int(height-305*(height/1080f)), int(600*(width/2400f)), int(300*(height/1080f)), 1, false, true);
+  Down = new Button(true, ButtonUP, clear, false, int(width/2-(300)*(width/2400f)), int(height-305*(height/1080f) + (int(300*(height/1080f))/2 )), int(600*(width/2400f)), int(150*(height/1080f)), 1, false, true);
 
-  SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-180*(width/1920f)), int(190*(height/1080f)), int(160*(width/1920f)), int(80*(height/1080f)));
-  Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(180+80+5)*(width/1920f)), int(20*(height/1080f)), int(80*(width/1920f)), int(80*(height/1080f)));
-  Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(180+80+5+180+5)*(width/1920f)), int(20*(height/1080f)), int(80*(width/1920f)), int(80*(height/1080f)));
+  Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-180*(width/2400f)), int(105*(height/1080f)), int(160*(width/2400f)), int(80*(height/1080f)));
+  Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-180*(width/2400f)), int(20*(height/1080f)), int(160*(width/2400f)), int(80*(height/1080f)));
+  SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-180*(width/2400f)), int(190*(height/1080f)), int(160*(width/2400f)), int(80*(height/1080f)));
+  Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(180+80+5)*(width/2400f)), int(20*(height/1080f)), int(80*(width/2400f)), int(80*(height/1080f)));
+  Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(180+80+5)*(width/2400f)), int(105*(height/1080f)), int(80*(width/2400f)), int(80*(height/1080f)));
 
 
   if (height > width) {
     SkipRight = new Button(true, right, rightGlow, false, int(width/2+(550+40)*(width/1920f)), int(height/2-75*(height/1080f)), int(200*(width/1920f)), int(150*(height/1080f)), 1, false, true);
     SkipLeft = new Button(true, left, leftGlow, false, int(width/2-(550+40+200)*(width/1920f)), int(height/2-75*(height/1080f)), int(200*(width/1920f)), int(150*(height/1080f)), 1, false, true);
     LevelX = new Button(true, BLevelX, BLevel1Glow, false, int(width/2-(550)*(width/1920f)), int(height/2-110*(height/1080f)), int((1100)*(width/1920f)), int(220*(height/1080f)), 1, false, true);
-    
-    Left = new Button(true, ButtonLEFT, clear, false,   int((width/2f - 400/2 - 300) * width / 1080f), int((2400-10-450) * height / 2400f), int(300*(width/1080f)), int(450*(height/2400f)), 1, false, true);
-    Right = new Button(true, ButtonRIGHT, clear, false, int((width/2f + 400/2) * width / 1080f),       int((2400-10-450) * height / 2400f), int(300*(width/1080f)), int(450*(height/2400f)), 1, false, true);
-    
-    Up = new Button(true, ButtonUP, clear, false,     int((width/2f - 400/2) * width / 1080f), int((2400-10-450) * height / 2400f),           int(400*(width/1080f)), int(450*(height/2400f)), 1, false, true);
+
+    Left = new Button(true, ButtonLEFT, clear, false, int((width/2f - 400/2 - 300) * width / 1080f), int((2400-10-450) * height / 2400f), int(300*(width/1080f)), int(450*(height/2400f)), 1, false, true);
+    Right = new Button(true, ButtonRIGHT, clear, false, int((width/2f + 400/2) * width / 1080f), int((2400-10-450) * height / 2400f), int(300*(width/1080f)), int(450*(height/2400f)), 1, false, true);
+
+    Up = new Button(true, ButtonUP, clear, false, int((width/2f - 400/2) * width / 1080f), int((2400-10-450) * height / 2400f), int(400*(width/1080f)), int(450*(height/2400f)), 1, false, true);
     Down = new Button(true, ButtonDown, clear, false, int((width/2f - 400/2) * width / 1080f), int((2400-10-450 + (450/2)) * height / 2400f), int(400*(width/1080f)), int(225*(height/2400f)), 1, false, true);
 
     Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-(10+140)*(width/1080f)), int(20*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
@@ -129,17 +135,15 @@ void setup() {
   setupBGAnimation();
   player = new Player(0, -1, blockSize, blockSize);
   LevelX.img = levelXImage(level);
-  if (everythingLoaded) {
-    background1.stop();
-    background2.stop();
-  }
 }
 
 //called in loop: It is responsible for continuously updating and rendering the graphics and animations of the program.
 void draw() {
   background(0);
   if (inGame) {
-    framesSinceStarted++;
+    if (!gameFinished) {
+      framesSinceStarted++;
+    }
     cam.update();
     keyListener();
 
@@ -161,11 +165,9 @@ void draw() {
       SwitchEdit.show();
     }
 
-    if (coolDownTimer > 0) {
-      coolDownTimer--;
-    }
 
-    //plays the background1/2 sound in a loop when it's loaded
+
+    //plays the backgroundMusic[] sounds when they are loaded
     playBackgroundMusic();
     Edit.show();
     Left.show();
@@ -180,6 +182,20 @@ void draw() {
     Import.show();
     touchCheck();
     ButtonTouchCheck();
+    if (!editModeOn) {
+      fill(255);
+      textSize(30*2);
+      text("Timer: "+(framesSinceStarted/50f), width/2 - (textWidth("Timer: "+10.00f))/2, 50*2);
+    }
+    if (gameFinished) {
+      fill(255);
+      textSize(75);
+      textAlign(LEFT);
+      text("Game Finished!", width/2f-textWidth("Game Finished!")/2f, height/2f);
+      text("You have collected "+coinsCollected+" coins!", width/2f-textWidth("You have collected "+coinsCollected+" coins!")/2f, height/2f+200f);
+      text("You took "+(framesSinceStarted/50f)+" seconds!", width/2f-textWidth("You took "+(framesSinceStarted/50f)+" seconds!")/2f, height/2f+400f);
+      textAlign(LEFT);
+    }
   } else {
     fill(255);
     textSize(30*2);
@@ -204,7 +220,7 @@ void draw() {
       }
       catch(Exception e) {
         println("Error in Draw() while displaying UI and playing background - music: ");
-        println(e);
+        e.printStackTrace();
       }
     } else {
       playSound(loading, 0.7*SoundEffectsSwitch.timer);
@@ -246,6 +262,9 @@ void draw() {
       circle(touches[i].x, touches[i].y, 120);
     }
   }
+  if (coolDownTimer > 0) {
+    coolDownTimer--;
+  }
 }
 
 void ButtonTouchCheck() {
@@ -253,26 +272,29 @@ void ButtonTouchCheck() {
   boolean rightT = Right.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
   boolean upT = Up.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
   boolean downT = Down.touch();
+  float speed = 2;
+  float maxSpeed = 12;
   if (touch) {
+
     //for (TouchEvent.Pointer pointer : touches) {
-    float speed = 2;
-    float maxSpeed = 12;
     // boolean leftT = Left.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
     //boolean rightT = Right.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
     //boolean upT = Up.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
     if (!editModeOn) {
-      if (leftT) {
-        if (player.vx > -maxSpeed) {
-          player.vx -= speed;
+      for (TouchEvent.Pointer pointer : touches) {
+        if (Left.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
+          if (player.vx > -maxSpeed) {
+            player.vx -= speed;
+          }
         }
-      }
-      if (rightT) {
-        if (player.vx < maxSpeed) {
-          player.vx += speed;
+        if (Right.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
+          if (player.vx < maxSpeed) {
+            player.vx += speed;
+          }
         }
-      }
-      if (upT) {
-        player.jump();
+        if (Up.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
+          player.jump();
+        }
       }
     } else {
       player.vx = 0;
@@ -422,7 +444,7 @@ void addFigure(String ObjectClass, int x, int y, int w, int h) {
     }
     catch(Exception e) {
       println("Error in addFigure() while saving world into "+level+".json");
-      println(e);
+      e.printStackTrace();
       delay(500);
       try {
         saveJSONArray(world, "level"+level+".json");
@@ -449,7 +471,7 @@ void removeFigure(int id) {
   catch(Exception e) {
     println("removeFigure(): Error while removing a Figure: id: "+id+", worldFigures.size():"+worldFigures.size());
     println("removeFigure(): Error catched:");
-    println(e);
+    e.printStackTrace();
     reloadFigures("world");
   }
 }
@@ -562,7 +584,7 @@ void click(boolean touch) {
     //if (touch == false) {
     //println("click(): "+getFigureAt(cam.getInWorldCoord(mouseX, mouseY)).getClass());
     //}
-    if (editModeOn && !Edit.touch() && !Exit.touch() && !Right.touch() && !Left.touch() && !Up.touch() && !SwitchEdit.touch() && !Share.touch() && !Import.touch() && !(editModeOn && Down.touch())) {
+    if (editModeOn && !Edit.touch() && !Exit.touch() && !Right.touch() && !Left.touch() && !Up.touch() && !SwitchEdit.touch() && !Share.touch() && !Import.touch() && !(editModeOn && Down.touch()) && !(mouseX > Share.x && mouseY < SwitchEdit.y)) {
       if (editMode != "remove") {
         Figure f = getFigureAt(cam.getInWorldCoord(mouseX, mouseY));
         if (f.id == -1) {
@@ -616,6 +638,7 @@ void click(boolean touch) {
       println("keyReleased(): Left Game, level: "+level);
       playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
       particles.removeAll(particles);
+      gameFinished = false;
     }
     if (Share.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
       if (coolDownTimer <= 0) {
@@ -626,10 +649,15 @@ void click(boolean touch) {
         // Share the JSONArray file
         shareFile(path);
         coolDownTimer=5;
+        userMessage("Share this world with your friends!");
+        userMessage("Export the.JSON-File and send it to them. They can import this file to their worlds.");
       }
     }
     if (Import.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
       if (coolDownTimer <= 0) {
+        userMessage("Import previously exported worlds. The file should be a.json file.");
+        userMessage("If you import them to preinstalled worlds, the change will not be saved.");
+        userMessage("You can import them to expty worlds to permanently save them.");
         playSound(click, 0.5*SoundEffectsSwitch.timer, true);
 
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -648,7 +676,10 @@ void click(boolean touch) {
     }
     if (everythingLoaded) {
       coinAnimation(mouseX, mouseY);
-      playSound(collectCoin, 0.2*SoundEffectsSwitch.timer, true);
+      if (coolDownTimer <= 0) {
+        playSound(collectCoin, 0.7*SoundEffectsSwitch.timer, true);
+        coolDownTimer = 5;
+      }
       if (LevelX.touch()&&(mouseButton==LEFT || touch)) {
         println("click(): Button pressed: Start Level "+level);
         inGame = true;
@@ -687,12 +718,7 @@ String saveJSONObjectInternal(JSONObject json, String filename) {
 void shareFile(String path) {
   File file = new File(path);
   println(file);
-  println(path);
   JSONArray json = loadJSONArray(path);
-  for (int i = 0; i < json.size(); i++) {
-    println(json.getJSONObject(i).getString("class"));
-  }
-
   Uri contentUri = FileProvider.getUriForFile(this.getActivity(), "philipp_schroeder.geometryjump", file);
 
   // Share intent
@@ -834,118 +860,183 @@ void updateEditMode() {
 
 //This function loads the necessary images used in the program.
 void loadImages() {
-  spike = loadImage("spike.png");
-  wall = loadImage("wall.png");
-  play = loadImage("player.png");
-  spikeGlow = loadImage("spikeGlow.png");
-  slime = loadImage("slime.png");
-  slimeGlow = loadImage("slimeGlow.png");
-  wallGlow = loadImage("wallGlow.png");
-  remove = loadImage("remove.png");
-  coinGlow = loadImage("coinGlow.png");
-  coin = loadImage("coin.png");
-  checkpointGlow = loadImage("checkpointGlow.png");
-  checkpoint = loadImage("checkpoint.png");
-  BEditModeOff = loadImage("BEditModeOff.png");
-  BEditModeOn = loadImage("BEditModeOn.png");
-  BLevel1 = loadImage("BLevel1.png");
-  BLevel2 = loadImage("BLevel2.png");
-  BLevelX = loadImage("BLevelX.png");
-  BLevel1Glow = loadImage("BLevel1Glow.png");
+  String folder = "images/";
+  spike = loadImage(folder+"spike.png");
+  wall = loadImage(folder+"wall.png");
+  play = loadImage(folder+"player.png");
+  spikeGlow = loadImage(folder+"spikeGlow.png");
+  slime = loadImage(folder+"slime.png");
+  slimeGlow = loadImage(folder+"slimeGlow.png");
+  wallGlow = loadImage(folder+"wallGlow.png");
+  remove = loadImage(folder+"remove.png");
+  coinGlow = loadImage(folder+"coinGlow.png");
+  coin = loadImage(folder+"coin.png");
+  checkpointGlow = loadImage(folder+"checkpointGlow.png");
+  checkpoint = loadImage(folder+"checkpoint.png");
+  BEditModeOff = loadImage(folder+"BEditModeOff.png");
+  BEditModeOn = loadImage(folder+"BEditModeOn.png");
+  BLevelX = loadImage(folder+"BLevelX.png");
+  BLevel1Glow = loadImage(folder+"BLevel1Glow.png");
   loaded = 10;
-  right = loadImage("right.png");
-  rightGlow = loadImage("rightGlow.png");
-  left = loadImage("left.png");
-  leftGlow = loadImage("leftGlow.png");
-  goalGlow = loadImage("goalGlow.png");
-  particleStar = loadImage("particleStar.png");
-  particleWall = loadImage("particleWall.png");
-  ButtonLEFT = loadImage("ButtonLEFT.png");
-  ButtonRIGHT = loadImage("ButtonRIGHT.png");
-  ButtonUP = loadImage("ButtonUP.png");
-  clear = loadImage("clear.png");
-  ButtonEXIT = loadImage("ButtonEXIT.png");
-  particleSlime = loadImage("particleSlime.png");
-  particleCheckpoint = loadImage("particleCheckpoint.png");
-  bgSwitch=loadImage("bg.png");
-  offSwitch=loadImage("off.png");
-  onSwitch=loadImage("on.png");
-  ButtonSwitch=loadImage("ButtonSwitch.png");
-  ButtonShare = loadImage("share.png");
-  ButtonImport = loadImage("ButtonImport.png");
-  ButtonDown = loadImage("ButtonDOWN.png");
+  right = loadImage(folder+"right.png");
+  rightGlow = loadImage(folder+"rightGlow.png");
+  left = loadImage(folder+"left.png");
+  leftGlow = loadImage(folder+"leftGlow.png");
+  goalGlow = loadImage(folder+"goalGlow.png");
+  particleStar = loadImage(folder+"particleStar.png");
+  particleWall = loadImage(folder+"particleWall.png");
+  ButtonLEFT = loadImage(folder+"ButtonLEFT.png");
+  ButtonRIGHT = loadImage(folder+"ButtonRIGHT.png");
+  ButtonUP = loadImage(folder+"ButtonUP.png");
+  clear = loadImage(folder+"clear.png");
+  ButtonEXIT = loadImage(folder+"ButtonEXIT.png");
+  particleSlime = loadImage(folder+"particleSlime.png");
+  particleCheckpoint = loadImage(folder+"particleCheckpoint.png");
+  bgSwitch=loadImage(folder+"bg.png");
+  offSwitch=loadImage(folder+"off.png");
+  onSwitch=loadImage(folder+"on.png");
+  ButtonSwitch=loadImage(folder+"ButtonSwitch.png");
+  ButtonShare = loadImage(folder+"share.png");
+  ButtonImport = loadImage(folder+"ButtonImport.png");
+  ButtonDown = loadImage(folder+"ButtonDOWN.png");
   loaded = 20;
   println("loadImages(): all images loaded");
 }
 
 
 //This function loads the necessary sound files used in the program.
-void loadSounds() {
-  loading = new SoundFile(this, "loading.mp3");
-  collectCoin = new SoundFile(this, "collectCoin.mp3");
-  loaded = 30;
-  background1 = new SoundFile(this, "background1.mp3");
-  loaded = 60;
-  click = new SoundFile(this, "click interface.mp3");
-  reset = new SoundFile(this, "reset.mp3");
+void loadSounds() { //backgroundMusicPlayer
+  String[] filenames = {"A_Night_Of_Dizzy_Spells.mp3", "Night_Shade.mp3", "Underclocked.mp3", "MAZE.mp3", "Powerup.mp3", "Sour Rock.mp3"};
+  backgroundMusicPlayer = new MediaPlayer[filenames.length];
+  for (int i = 0; i < filenames.length; i++) {
+    backgroundMusicPlayer[i] = loadSound("sounds/backgroundMusic/"+filenames[i]);
+  }
+  backgroundMusicFilesLoaded = filenames.length;
+  loaded = 45;
+  String folder = "sounds/";
+  loading = loadSound(folder+"loading.mp3");
+  collectCoin = loadSound(folder+"collectCoin.mp3");
+  loaded = 55;
+  reset = loadSound(folder+"reset.mp3");
+  click = loadSound(folder+"click interface.mp3");
   loaded = 70;
-  jump = new SoundFile(this, "jump.mp3");
-  jumpSlime = new SoundFile(this, "jumpSlime.mp3");
-  loaded = 80;
-  background2 = new SoundFile(this, "background2.mp3");
-  loaded = 90;
-  goalSound = new SoundFile(this, "goal.mp3");
-  tabChange = new SoundFile(this, "tabChange.mp3");
+  jump = loadSound(folder+"jump.mp3");
+  jumpSlime = loadSound(folder+"jumpSlime.mp3");
+  loaded = 85;
+  goalSound = loadSound(folder+"goal.mp3");
+  tabChange = loadSound(folder+"tabChange.mp3");
   loaded = 100;
   println("loadSounds(): all sounds loaded");
   everythingLoaded = true;
   loading.pause();
 }
 
-void playSound(SoundFile sound, boolean multiple) {
+MediaPlayer loadSound(String path) {
+  try {
+    MediaPlayer m;
+    // Load the sound file from the assets folder
+    Context context = getActivity().getApplicationContext();
+    AssetFileDescriptor afd = context.getAssets().openFd(path);
+    m = new MediaPlayer();
+    m.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+    m.prepare();
+    return m;
+  }
+  catch (Exception e) {
+    e.printStackTrace();
+    return null;
+  }
+}
+
+void playSound(MediaPlayer sound, boolean multiple) {
   playSound(sound, 1, multiple);
 }
 
-void playSound(SoundFile sound) {
+void playSound(MediaPlayer sound) {
   playSound(sound, 1, false);
 }
 
-void playSound(SoundFile sound, float amp) {
+void playSound(MediaPlayer sound, float amp) {
   playSound(sound, amp, false);
 }
 
-void playBackgroundMusic() {
-  switch(int(random(0, 2))) {
-  case 0:
-    if (background2.isPlaying() == false && backgroundMusicAmp != 0) {
-      playSound(background1, 0.4*backgroundMusicAmp);
-    } else if (background1.isPlaying()) {
-      background1.stop();
-    }
-    break;
-  default:
-    if (background1.isPlaying() == false && backgroundMusicAmp != 0) {
-      playSound(background2, 0.2*backgroundMusicAmp);
-    } else if (background2.isPlaying()) {
-      background2.stop();
-    }
-    break;
-  }
-}
-
-
 //This plays a SoundFile with specified volume ('amp'). If 'multiple' is true, it plays the sound again, even when this sound is already playing (multiple times at the same time)
-void playSound(SoundFile sound, float amp, boolean multiple) {
+void playSound(MediaPlayer sound, float amp, boolean multiple) {
   if (sound != null && amp > 0.0001) {
     if (sound.isPlaying() == false || multiple) {
-      sound.play();
-      sound.amp(amp+0.000000001);
+      if (sound.isPlaying()) {
+        MediaPlayer sound2 = new MediaPlayer();
+        sound2 = sound;
+        sound2.seekTo(0);
+        sound2.start();
+      } else {
+        sound.start();
+        sound.setVolume(amp, amp);
+      }
     } else if (sound.isPlaying() == true) {
-      sound.amp(amp+0.000000001);
+      sound.setVolume(amp, amp);
     }
   }
 }
 
+void playBackgroundMusic() {
+  setVolumeMusic();
+  if (!isMusicPlaying()) {
+    playSound(int(random(0, backgroundMusicFilesLoaded)));
+  }
+}
+
+// Call this function to start playing the sound
+void playSound(int index) {
+  if (backgroundMusicPlayer[index] != null) {
+    backgroundMusicPlayer[index].start();
+  }
+}
+
+// Call this function with an integer to stop playing the corresponding sound
+void stopSound(int index) {
+  if (backgroundMusicPlayer[index] != null) {
+    backgroundMusicPlayer[index].stop();
+    try {
+      // You need to prepare the media player again once it has been stopped
+      backgroundMusicPlayer[index].prepare();
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+}
+
+void setVolumeMusic() {
+  int n = whatPlays();
+  for (int i = 0; i <  backgroundMusicFilesLoaded; i++) {
+    try {
+      backgroundMusicPlayer[i].setVolume(backgroundMusicAmp*0.3*int(n == i), backgroundMusicAmp*0.3);
+    }
+    catch(Exception e) {
+      println("Error in setVolumeMusic(): "+i);
+      e.printStackTrace();
+    }
+  }
+}
+
+boolean isMusicPlaying() {
+  for (int i = 0; i <  backgroundMusicFilesLoaded; i++) {
+    if ( backgroundMusicPlayer[i].isPlaying()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+int whatPlays() {
+  for (int i = 0; i <  backgroundMusicFilesLoaded; i++) {
+    if ( backgroundMusicPlayer[i].isPlaying()) {
+      return i;
+    }
+  }
+  return -1;
+}
 
 //This function handles the key inputs for movement and other actions in the game.
 void keyListener() {
@@ -1028,7 +1119,7 @@ void wallAnimation(int x, int y) {
 }
 
 PImage levelXImage(int printLevel) {
-  PImage vorlage = loadImage("vorlage.png");
+  PImage vorlage = loadImage("images/"+"vorlage.png");
   PGraphics pg= createGraphics(640, 440);
   pg.beginDraw();
   pg.image(vorlage, 0, 0);
@@ -1074,7 +1165,7 @@ void onActivityResult(int requestCode, int resultCode, Intent data) {
         }
         catch(Exception e) {
           println("Error in onActivityResult() while saving world into world.json");
-          println(e);
+          e.printStackTrace();
           delay(500);
           try {
             saveJSONArray(world, "world.json");
@@ -1113,6 +1204,37 @@ void importFile() {
   }
   catch(Exception e) {
     println("Error in importFile():");
-    println(e);
+    e.printStackTrace();
   }
+}
+
+void userMessage(String s) {
+  runOnUiThread(new Runnable() {
+    public void run() {
+      Toast.makeText(getContext(), s, Toast.LENGTH_LONG).show();
+    }
+  }
+  );
+}
+
+Context getContext() {
+  return getActivity();
+}
+
+void goal() {
+  delay(2500);
+  inGame = false;
+  cam.x = 0;
+  cam.y = 0;
+  println("checkpoint(): Left Game, level: "+level);
+  BgMusicSwitch.hitbox = true;
+  SoundEffectsSwitch.hitbox = true;
+  playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
+  level++;
+  LevelX.img = levelXImage(level);
+  gameFinished = false;
+}
+
+void gameFinish() {
+  thread("goal");
 }
