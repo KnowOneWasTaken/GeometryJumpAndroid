@@ -1,10 +1,8 @@
 class Cam {
-  int x, y, w, h;
-  Cam(int x, int y, int w, int h) {
+  int x, y;
+  Cam(int x, int y) {
     this.x = x;
     this.y = y;
-    this.w = w;
-    this. h = h;
   }
 
   void drawRect(int px, int py, int pw, int ph) {

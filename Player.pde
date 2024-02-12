@@ -40,7 +40,9 @@ class Player extends Figure {
       player.x = checkpointBlock.x*blockSize;
       player.y = (checkpointBlock.y)*blockSize;
     } else {
-      framesSinceStarted = 0;
+      if (!gameFinished) {
+        framesSinceStarted = 0;
+      }
       player.x = 0;
       player.y = -blockSize;
     }
@@ -216,8 +218,10 @@ class Player extends Figure {
     }
     if (delID!= -1 && editModeOn == false && last) { //removes a Coin when you are not in editMode
       coinAnimation(int(worldFigures.get(delID).x+worldFigures.get(delID).w/2), int(worldFigures.get(delID).y+worldFigures.get(delID).h));
-      removeFigure(delID);
-      coinsCollected++;
+      removeFigure(delID, false);
+      if (!gameFinished) {
+        coinsCollected++;
+      }
       playSound(collectCoin, 0.7*SoundEffectsSwitch.timer, true);
       println("Player: hitbox(): Coin collected");
     }
@@ -266,7 +270,12 @@ class Player extends Figure {
           }
           checkpointAnimation(int(x+w/2), int(y+h));
           gameFinished = true;
-          gameFinish();
+          coinsInWorld = 0;
+          for(Figure fig : worldFigures) {
+           if(fig.getClass() == co.getClass()) {
+             coinsInWorld++;
+           }
+          }
         } else {
           checkpointBlock = new PVector(int(f.x/blockSize), int((f.y/blockSize)-1));
           println("Player: checkpoint(): Checkpoint reached: "+checkpointBlock.x + ", "+checkpointBlock.y+ "; Vector: "+new PVector(int(f.x/blockSize), int((f.y/blockSize)-1)));

@@ -33,10 +33,11 @@ MediaPlayer[] backgroundMusicPlayer;
 
 //These are variable declarations used throughout the program. They include objects such as figures, images, player, camera, and various flags and settings.
 PImage spike, wall, play, spikeGlow, slime, slimeGlow, wallGlow, remove, coin, coinGlow, checkpoint, checkpointGlow, BEditModeOn, BEditModeOff, BLevel1Glow, right, rightGlow, left, leftGlow, BLevelX, goalGlow, particleStar,
-  particleWall, ButtonLEFT, ButtonRIGHT, ButtonUP, clear, ButtonEXIT, particleSlime, particleCheckpoint, bgSwitch, offSwitch, onSwitch, ButtonSwitch, ButtonShare, ButtonImport, ButtonDown;
+  particleWall, ButtonLEFT, ButtonRIGHT, ButtonUP, clear, ButtonEXIT, particleSlime, particleCheckpoint, bgSwitch, offSwitch, onSwitch, ButtonSwitch, ButtonShare, ButtonImport, ButtonDown, ButtonSettings, ButtonPrivacyPolicy,
+  ButtonMusic, Logo, goalAnimationBackground, ButtonOK, emptyCoin;
 
-Button Edit, SkipRight, SkipLeft, LevelX, Left, Right, Up, Exit, SwitchEdit, Share, Import, Down;
-SwitchButton BgMusicSwitch, SoundEffectsSwitch;
+Button Edit, SkipRight, SkipLeft, LevelX, Left, Right, Up, Exit, SwitchEdit, Share, Import, Down, Settings, PrivacyPolicy, Music, OK;
+SwitchButton BgMusicSwitch, SoundEffectsSwitch, DebugSwitch;
 
 ArrayList<Particle> particles = new ArrayList<Particle>();
 
@@ -78,6 +79,8 @@ float backgroundMusicAmp = 1;
 boolean debug = false;
 int backgroundMusicFilesLoaded = 0; //indicates how many of the background-music files are already loaded
 boolean gameFinished = false;
+boolean inSettings = false;
+int coinsInWorld = 0; //Used to show how many coins the player has collected after finishing the game. Indicates how many coins are still in the world.
 
 //called once at launch
 void setup() {
@@ -94,10 +97,15 @@ void setup() {
   ch = new Checkpoint();
   go = new Goal();
 
-  BgMusicSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, 20*2, 20*2, 80*2, 40*2);
-  SoundEffectsSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, 20*2, 80*2, 80*2, 40*2);
+  BgMusicSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width/2-80, int(height/3.5f), 160, 80);
+  SoundEffectsSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width/2-80, int(height/3.5f)+80*2+40, 160, 80);
+  DebugSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width/2-80, int(height/3.5f)+80*4+40*2, 160, 80);
 
-  cam = new Cam(0, 0, 1920, 1080);
+  //sets the start state of DebugSwitch to the correct position
+  DebugSwitch.clickEvent();
+  DebugSwitch.timer = 0;
+
+  cam = new Cam(0, 0);
 
   LevelX = new Button(true, BLevelX, BLevel1Glow, false, int(width/2-320*(width/2400f)), int(height/2-220*(height/1080f)), int(640*(width/2400f)), int(440*(height/1080f)), 1, false, true);
   SkipRight = new Button(true, right, rightGlow, false, int(width/2+(320+50)*(width/2400f)), int(height/2-75*(height/1080f)), int(100*(width/2400f)), int(150*(height/1080f)), 1, false, true);
@@ -112,7 +120,10 @@ void setup() {
   SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-180*(width/2400f)), int(190*(height/1080f)), int(160*(width/2400f)), int(80*(height/1080f)));
   Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(180+80+5)*(width/2400f)), int(20*(height/1080f)), int(80*(width/2400f)), int(80*(height/1080f)));
   Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(180+80+5)*(width/2400f)), int(105*(height/1080f)), int(80*(width/2400f)), int(80*(height/1080f)));
-
+  Settings = new Button(true, ButtonSettings, ButtonSettings, false, int(20*(width/2400f)), int((height-20-160)*(height/1080f)), int(160*(width/2400f)), int(160*(height/1080f)));
+  PrivacyPolicy = new Button(true, ButtonPrivacyPolicy, ButtonPrivacyPolicy, false, int((width/2-110*3)*(width/2400f)), int((height-20-50*3)*(height/1080f)), int(220*3*(width/2400f)), int(50*3*(height/1080f)));
+  Music = new Button(true, ButtonMusic, ButtonMusic, false, int((width/2-127)*(width/2400f)), int((height-20*2-50*3*2)*(height/1080f)), int(370*(width/2400f)), int(50*3*(height/1080f)));
+  OK = new Button(true, ButtonMusic, ButtonMusic, false, int((width/2-125)*(width/1080f)), int((height/6.4+855)*(height/2400f)), int(400*(width/1080f)), int(200*3*(height/2400f)));
 
   if (height > width) {
     SkipRight = new Button(true, right, rightGlow, false, int(width/2+(550+40)*(width/1920f)), int(height/2-75*(height/1080f)), int(200*(width/1920f)), int(150*(height/1080f)), 1, false, true);
@@ -130,6 +141,10 @@ void setup() {
     SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-(140+10)*(width/1080f)), int((20+140+10*2+140)*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
     Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(140*2+10*2)*(width/1080f)), int(20*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
     Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(140*2+10+10)*(width/1080f)), int((20+10+140)*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
+    Settings = new Button(true, ButtonSettings, ButtonSettings, false, int((20)*(width/1080f)), int((height-20-140)*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
+    PrivacyPolicy = new Button(true, ButtonPrivacyPolicy, ButtonPrivacyPolicy, false, int((width/2-86*3)*(width/1080f)), int((height-20-50*3)*(height/2400f)), int(220*3*(width/1080f)), int(50*3*(height/2400f)));
+    Music = new Button(true, ButtonMusic, ButtonMusic, false, int((width/2-127)*(width/1080f)), int((height-20*2-50*3*2)*(height/2400f)), int(370*(width/1080f)), int(50*3*(height/2400f)));
+    OK = new Button(true, ButtonOK, ButtonOK, false, int((width/2-200)*(width/1080f)), int((height/5+855)*(height/2400f)), int(400*(width/1080f)), int(200*(height/2400f)));
   }
 
   setupBGAnimation();
@@ -188,22 +203,31 @@ void draw() {
       text("Timer: "+(framesSinceStarted/50f), width/2 - (textWidth("Timer: "+10.00f))/2, 50*2);
     }
     if (gameFinished) {
+      image(goalAnimationBackground, width/2-540, 475, 1080, 1080);
       fill(255);
       textSize(75);
       textAlign(LEFT);
-      text("Game Finished!", width/2f-textWidth("Game Finished!")/2f, height/2f);
-      text("You have collected "+coinsCollected+" coins!", width/2f-textWidth("You have collected "+coinsCollected+" coins!")/2f, height/2f+200f);
-      text("You took "+(framesSinceStarted/50f)+" seconds!", width/2f-textWidth("You took "+(framesSinceStarted/50f)+" seconds!")/2f, height/2f+400f);
+      text("Game Finished!", width/2f-textWidth("Game Finished!")/2f, 475+200);
+      text("You took "+(framesSinceStarted/50f)+" seconds!", width/2f-textWidth("You took "+(framesSinceStarted/50f)+" seconds!")/2f, 475+200*2);
+      if ((coinsCollected+coinsInWorld) > 0) {
+        if((coinsCollected+coinsInWorld)>1) {
+        text("You have collected "+coinsCollected+"/"+(coinsCollected+coinsInWorld)+" coins!", width/2f-textWidth("You have collected "+coinsCollected+" coins!")/2f, 475+200f*3);
+        } else {
+          text("You have collected 1/"+(coinsCollected+coinsInWorld)+" coin!", width/2f-textWidth("You have collected "+coinsCollected+" coins!")/2f, 475+200f*3);
+        }
+      }
       textAlign(LEFT);
+      for (int i = 0; i < (coinsCollected+coinsInWorld); i++) {
+        if (i >= coinsCollected) {
+          image(emptyCoin, width/2-((coinsCollected+coinsInWorld)*120 + (coinsCollected+coinsInWorld-1)*20)/2 + i*(120+20), height/5f+665, 120, 120);
+        } else {
+          image(coin, width/2-((coinsCollected+coinsInWorld)*120 + (coinsCollected+coinsInWorld-1)*20)/2 + i*(120+20), height/5f+665, 120, 120);
+        }
+      }
+      OK.show();
     }
   } else {
-    fill(255);
-    textSize(30*2);
-    text("Background-Music ", 110*2, 50*2);
-    text("Sound-Effects ", 110*2, 110*2);
-    BgMusicSwitch.show();
-    SoundEffectsSwitch.show();
-    backgroundMusicAmp = BgMusicSwitch.timer;
+    backgroundAnimation();
     if (everythingLoaded) {
       try {
         try {
@@ -214,9 +238,34 @@ void draw() {
           println(e2);
         }
         touchCheck();
-        LevelX.show();
-        SkipRight.show();
-        SkipLeft.show();
+        if (!inSettings) {
+          imageMode(CENTER);
+          if (height < width) {
+            image(Logo, width/2, height/4-160, 1024, 420);
+          } else {
+            image(Logo, width/2, height/4, 1024, 420);
+          }
+          imageMode(CORNER);
+          LevelX.show();
+          SkipRight.show();
+          SkipLeft.show();
+          Settings.show();
+        } else {//inSettings
+          Settings.show();
+          PrivacyPolicy.show();
+          Music.show();
+          fill(255);
+          textSize(30*2);
+          textAlign(CENTER);
+          text("Background-Music", width/2, int(height/3.5f)-20);
+          text("Sound-Effects", width/2, int(height/3.5f)+80+40+60);
+          text("Debug", width/2, int(height/3.5f)+80*3+40*2+60);
+          textAlign(LEFT);
+          BgMusicSwitch.show();
+          SoundEffectsSwitch.show();
+          DebugSwitch.show();
+          backgroundMusicAmp = BgMusicSwitch.timer;
+        }
       }
       catch(Exception e) {
         println("Error in Draw() while displaying UI and playing background - music: ");
@@ -235,7 +284,6 @@ void draw() {
       //line(width/2,0,width/2,height);
       //line(0,height/2,width,height/2);
     }
-    backgroundAnimation();
   }
   for (int i = 0; i < particles.size(); i++) {
     particles.get(i).update();
@@ -461,12 +509,15 @@ void addFigure(String ObjectClass, int x, int y, int w, int h) {
 
 
 //This function removes a figure from the world based on its ID. It removes the corresponding JSON object from the world JSONArray and removes the figure from the worldFigures ArrayList.
-void removeFigure(int id) {
+void removeFigure(int id, boolean permanent) {
   try {
     world.remove(id);
     worldFigures.remove(id);
     saveJSONArray(world, "world.json");
     reloadFigures("world");
+    if(level > levelAmount && permanent) {
+      saveJSONArray(world, "level"+level+".json");
+    }
   }
   catch(Exception e) {
     println("removeFigure(): Error while removing a Figure: id: "+id+", worldFigures.size():"+worldFigures.size());
@@ -590,13 +641,12 @@ void click(boolean touch) {
         if (f.id == -1) {
           addFigure(editMode, int(cam.getInWorldCoordBlock(mouseX, mouseY).x), int(cam.getInWorldCoordBlock(mouseX, mouseY).y), 1, 1);
           playSound(click, 0.5*SoundEffectsSwitch.timer, true);
-          //updateIDs();
         }
       } else {
         Figure f = getFigureAt(cam.getInWorldCoord(mouseX, mouseY));
         if (f.id != -1) {
           println("click(): Trying to remove Figure, id: "+f.id);
-          removeFigure(f.id);
+          removeFigure(f.id, true);
           println("click(): Figure removed");
           playSound(click, 0.5*SoundEffectsSwitch.timer, true);
         } else {
@@ -657,7 +707,7 @@ void click(boolean touch) {
       if (coolDownTimer <= 0) {
         userMessage("Import previously exported worlds. The file should be a.json file.");
         userMessage("If you import them to preinstalled worlds, the change will not be saved.");
-        userMessage("You can import them to expty worlds to permanently save them.");
+        userMessage("You can import them to empty worlds to permanently save them.");
         playSound(click, 0.5*SoundEffectsSwitch.timer, true);
 
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
@@ -667,40 +717,72 @@ void click(boolean touch) {
         coolDownTimer=5;
       }
     }
-  } else {
-    if (BgMusicSwitch.touch()&&(mouseButton==LEFT || touch)) {
-      BgMusicSwitch.clickEvent();
+    if (gameFinished) {
+      if (OK.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
+        coolDownTimer = 5;
+        inGame = false;
+        cam.x = 0;
+        cam.y = 0;
+        println("checkpoint(): Left Game, level: "+level);
+        BgMusicSwitch.hitbox = true;
+        SoundEffectsSwitch.hitbox = true;
+        playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
+        level++;
+        LevelX.img = levelXImage(level);
+        gameFinished = false;
+      }
     }
-    if (SoundEffectsSwitch.touch()&&(mouseButton==LEFT || touch)) {
-      SoundEffectsSwitch.clickEvent();
+  } else {
+    if (Settings.touch()&&(mouseButton==LEFT || touch)) {
+      inSettings = !inSettings;
+      playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
     }
     if (everythingLoaded) {
       coinAnimation(mouseX, mouseY);
-      if (coolDownTimer <= 0) {
-        playSound(collectCoin, 0.7*SoundEffectsSwitch.timer, true);
-        coolDownTimer = 5;
-      }
-      if (LevelX.touch()&&(mouseButton==LEFT || touch)) {
-        println("click(): Button pressed: Start Level "+level);
-        inGame = true;
-        particles.clear();
-        particles.removeAll(particles);
-        startLevel(level);
-        playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
-      }
-      if (SkipRight.touch()&&(mouseButton==LEFT || touch)) {
-        println("click(): Button pressed: SkipRight: "+level);
-        level++;
-        LevelX.img = levelXImage(level);
-        playSound(click, 0.7*SoundEffectsSwitch.timer, true);
-      }
-      if (SkipLeft.touch()&&(mouseButton==LEFT || touch)) {
-        if (level > 1) {
-          level--;
-          LevelX.img = levelXImage(level);
-          println("click(): Button pressed: SkipLeft: "+level);
+      if (!inSettings) {
+        if (LevelX.touch()&&(mouseButton==LEFT || touch)) {
+          if (coolDownTimer <= 0) {
+            println("click(): Button pressed: Start Level "+level);
+            inGame = true;
+            particles.clear();
+            particles.removeAll(particles);
+            startLevel(level);
+            playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
+          }
         }
-        playSound(click, 0.7*SoundEffectsSwitch.timer, true);
+        if (SkipRight.touch()&&(mouseButton==LEFT || touch)) {
+          println("click(): Button pressed: SkipRight: "+level);
+          level++;
+          LevelX.img = levelXImage(level);
+          playSound(click, 0.7*SoundEffectsSwitch.timer, true);
+        }
+        if (SkipLeft.touch()&&(mouseButton==LEFT || touch)) {
+          if (level > 1) {
+            level--;
+            LevelX.img = levelXImage(level);
+            println("click(): Button pressed: SkipLeft: "+level);
+          }
+          playSound(click, 0.7*SoundEffectsSwitch.timer, true);
+        }
+      } else {
+        if (PrivacyPolicy.touch()&&(mouseButton==LEFT || touch)) {
+          playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+          openWebsiteInBrowser("https://www.notion.so/Privacy-Policy-EN-11fe08485f6a4d6e85765afba71b4006?pvs=4");
+        }
+        if (Music.touch()&&(mouseButton==LEFT || touch)) {
+          playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+          openWebsiteInBrowser("https://youtube.com/playlist?list=PLwJjxqYuirCLkq42mGw4XKGQlpZSfxsYd");
+        }
+        if (BgMusicSwitch.touch()&&(mouseButton==LEFT || touch)) {
+          BgMusicSwitch.clickEvent();
+        }
+        if (SoundEffectsSwitch.touch()&&(mouseButton==LEFT || touch)) {
+          SoundEffectsSwitch.clickEvent();
+        }
+        if (DebugSwitch.touch()&&(mouseButton==LEFT || touch)) {
+          DebugSwitch.clickEvent();
+          debug = !debug;
+        }
       }
     } else {
       coinAnimation(mouseX, mouseY);
@@ -899,6 +981,13 @@ void loadImages() {
   ButtonShare = loadImage(folder+"share.png");
   ButtonImport = loadImage(folder+"ButtonImport.png");
   ButtonDown = loadImage(folder+"ButtonDOWN.png");
+  ButtonSettings = loadImage(folder+"settings.png");
+  ButtonPrivacyPolicy = loadImage(folder+"privacypolicy.png");
+  ButtonMusic = loadImage(folder+"music.png");
+  Logo = loadImage(folder+"Logo.png");
+  ButtonOK = loadImage(folder+"ok.png");
+  goalAnimationBackground = loadImage(folder+"goalAnimationBackground.png");
+  emptyCoin = loadImage(folder+"emptyCoin.png");
   loaded = 20;
   println("loadImages(): all images loaded");
 }
@@ -1221,20 +1310,20 @@ Context getContext() {
   return getActivity();
 }
 
-void goal() {
-  delay(2500);
-  inGame = false;
-  cam.x = 0;
-  cam.y = 0;
-  println("checkpoint(): Left Game, level: "+level);
-  BgMusicSwitch.hitbox = true;
-  SoundEffectsSwitch.hitbox = true;
-  playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
-  level++;
-  LevelX.img = levelXImage(level);
-  gameFinished = false;
-}
+void openWebsiteInBrowser(String url) {
+  try {
+    // Ensure the URL starts with "http://" or "https://"
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = "http://" + url;
+    }
 
-void gameFinish() {
-  thread("goal");
+    // Create an intent to open the URL in the default web browser
+    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+    startActivity(browserIntent);
+  }
+  catch (Exception e) {
+    // Handle the case where no web browser is installed
+    Toast.makeText(getContext(), "No application can handle this request. Please install a web browser.", Toast.LENGTH_LONG).show();
+    e.printStackTrace();
+  }
 }
