@@ -25,13 +25,16 @@ class Particle {
   void show() {
     rotation += round(vRotate/10.0);
     if (!inGame) {
+      pushMatrix();
       translate(x, y);
       tint(255, opacity);
       rotate(rotation/(2.0*PI));
       cam.drawImage(img, -size/2, -size/2, size, size);
       rotate(-rotation/(2.0*PI));
       translate(-x, -y);
+      popMatrix();
     } else {
+      pushMatrix();
       //tint(255, opacity);
       //cam.drawImage(img, x+size/2, y+size/2, size, size);
       translate((-cam.x+x)*gameZoom, (-cam.y+y)*gameZoom);
@@ -40,6 +43,7 @@ class Particle {
       image(img, (-size/2)*gameZoom, (-size/2)*gameZoom, size*gameZoom, size*gameZoom);
       rotate(-rotation/(2.0*PI));
       translate((+cam.x-x)*gameZoom, (+cam.y-y)*gameZoom);
+      popMatrix();
     }
     noTint();
   }

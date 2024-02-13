@@ -28,15 +28,15 @@ import java.io.File;
 import java.util.ArrayList;
 import java.io.IOException;
 
-MediaPlayer click, reset, jump, jumpSlime, collectCoin, goalSound, tabChange, loading;
+MediaPlayer click, reset, jump, jumpSlime, collectCoin, goalSound, tabChange, loading, explosion;
 MediaPlayer[] backgroundMusicPlayer;
 
 //These are variable declarations used throughout the program. They include objects such as figures, images, player, camera, and various flags and settings.
 PImage spike, wall, play, spikeGlow, slime, slimeGlow, wallGlow, remove, coin, coinGlow, checkpoint, checkpointGlow, BEditModeOn, BEditModeOff, BLevel1Glow, right, rightGlow, left, leftGlow, BLevelX, goalGlow, particleStar,
   particleWall, ButtonLEFT, ButtonRIGHT, ButtonUP, clear, ButtonEXIT, particleSlime, particleCheckpoint, bgSwitch, offSwitch, onSwitch, ButtonSwitch, ButtonShare, ButtonImport, ButtonDown, ButtonSettings, ButtonPrivacyPolicy,
-  ButtonMusic, Logo, goalAnimationBackground, ButtonOK, emptyCoin, Bullet1, Bullet2, Bullet3, Bullet4, missileLauncherGlow, particleBullet, ButtonSwitchNeg;
+  ButtonMusic, Logo, goalAnimationBackground, ButtonOK, emptyCoin, Bullet1, Bullet2, Bullet3, Bullet4, missileLauncherGlow, particleBullet, ButtonSwitchNeg, ButtonRotateRight, ButtonRotateLeft;
 
-Button Edit, SkipRight, SkipLeft, LevelX, Left, Right, Up, Exit, SwitchEdit, SwitchEditNeg, Share, Import, Down, Settings, PrivacyPolicy, Music, OK;
+Button Edit, SkipRight, SkipLeft, LevelX, Left, Right, Up, Exit, SwitchEdit, SwitchEditNeg, Share, Import, Down, Settings, PrivacyPolicy, Music, OK, RotateRight, RotateLeft;
 SwitchButton BgMusicSwitch, SoundEffectsSwitch, DebugSwitch;
 
 ArrayList<Particle> particles = new ArrayList<Particle>();
@@ -51,6 +51,7 @@ boolean[] keysPressed = new boolean[65536]; //used to check if a key is pressed 
 JSONArray world; //The json-Array that contains the figures of the environment
 JSONArray times; //contains the times (frame-Counts) in which the player has completed the levels (best scores)
 String editMode = "wall"; //default for the world-edit mode: selects box/walls as the default to add to your world in editModeOn
+int rotateMode = 0;
 int editModeInt = 1;
 boolean editModeOn = false; //indicates if the editMode is on or off
 boolean gravity = false; //indicates if gravity is in editModeOn active or not
@@ -121,13 +122,20 @@ void setup() {
     Up = new Button(true, ButtonUP, clear, false, int(width/2f - (400/2) * width / 1080f), int(height-(10+450) * heightScale), int(400*widthScale), int(450*heightScale), 1, false, true);
     Down = new Button(true, ButtonDown, clear, false, int(width/2f - (400/2) * widthScale), int(height-((10+450) - (450/2)) * heightScale), int(400*widthScale), int(225*heightScale), 1, false, true);
 
-    Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-(10+140)*widthScale), int(20*heightScale), int(140*widthScale), int(140*heightScale));
-    Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-(140+10)*widthScale), int((20+140+10)*heightScale), int(140*widthScale), int(140*heightScale));
-    SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-(140+10)*widthScale), int((20+140+10*2+140)*heightScale), int(140*widthScale), int(140*heightScale));
-    SwitchEditNeg = new Button(true, ButtonSwitchNeg, ButtonSwitchNeg, false, int(width-(140*2+10*2)*widthScale), int((20+140+10*2+140)*heightScale), int(140*widthScale), int(140*heightScale));
-    Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(140*2+10*2)*widthScale), int(20*heightScale), int(140*widthScale), int(140*heightScale));
-    Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(140*2+10+10)*widthScale), int((20+10+140)*heightScale), int(140*widthScale), int(140*heightScale));
-    Settings = new Button(true, ButtonSettings, ButtonSettings, false, int((20)*widthScale), int(height-(20+140)*heightScale), int(140*widthScale), int(140*heightScale));
+    int size = 140;
+    int distance = 20;
+
+    Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-(distance+size)*widthScale), int(distance*heightScale), int(size*widthScale), int(size*heightScale));
+    Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-(distance+size)*widthScale), int((distance*2+size)*heightScale), int(size*widthScale), int(size*heightScale));
+    SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-(distance+size)*widthScale), int((distance*3+size*2)*heightScale), int(size*widthScale), int(size*heightScale));
+    RotateRight = new Button(true, ButtonRotateRight, ButtonRotateRight, false, int(width-(distance+size)*widthScale), int((distance*4+size*3)*heightScale), int(size*widthScale), int(size*heightScale));
+
+    Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(size*2+distance*2)*widthScale), int(distance*heightScale), int(size*widthScale), int(size*heightScale));
+    Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(size*2+distance*2)*widthScale), int((distance*2+size)*heightScale), int(size*widthScale), int(size*heightScale));
+    SwitchEditNeg = new Button(true, ButtonSwitchNeg, ButtonSwitchNeg, false, int(width-(size*2+distance*2)*widthScale), int((distance*3+size*2)*heightScale), int(size*widthScale), int(size*heightScale));
+    RotateLeft = new Button(true, ButtonRotateLeft, ButtonRotateLeft, false, int(width-(size*2+distance*2)*widthScale), int((distance*4+size*3)*heightScale), int(size*widthScale), int(size*heightScale));
+
+    Settings = new Button(true, ButtonSettings, ButtonSettings, false, int((20)*widthScale), int(height-(20+size)*heightScale), int(size*widthScale), int(size*heightScale));
     PrivacyPolicy = new Button(true, ButtonPrivacyPolicy, ButtonPrivacyPolicy, false, int(width/2-(86*3)*widthScale), int(height-(20+50*3)*heightScale), int(220*3*widthScale), int(50*3*heightScale));
     Music = new Button(true, ButtonMusic, ButtonMusic, false, int(width/2-(127)*widthScale), int(height-(20*2+50*3*2)*heightScale), int(370*widthScale), int(50*3*heightScale));
     OK = new Button(true, ButtonOK, ButtonOK, false, int((width/2-200*widthScale)), int((height/5+855*heightScale)), int(400*widthScale), int(200*heightScale));
@@ -148,11 +156,12 @@ void setup() {
     Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-(size+distance)*widthScale), int(distance*heightScale), int(160*widthScale), int(160*heightScale));
     Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-(size+distance)*widthScale), int((size+distance*2)*heightScale), int(size*widthScale), int(size*heightScale));
     SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-(size+distance)*widthScale), int((size*2+distance*3)*heightScale), int(size*widthScale), int(size*heightScale));
-
+    RotateRight = new Button(true, ButtonRotateRight, ButtonRotateRight, false, int(width-(size+distance)*widthScale), int((size*3+distance*4)*heightScale), int(size*widthScale), int(size*heightScale));
 
     Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(size*2+distance*2)*widthScale), int(distance*heightScale), int(160*widthScale), int(160*heightScale));
     Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(size*2+distance*2)*widthScale), int((size+distance*2)*heightScale), int(size*widthScale), int(size*heightScale));
     SwitchEditNeg = new Button(true, ButtonSwitchNeg, ButtonSwitchNeg, false, int(width-(size*2+distance*2)*widthScale), int((size*2+distance*3)*heightScale), int(size*widthScale), int(size*heightScale));
+    RotateLeft = new Button(true, ButtonRotateLeft, ButtonRotateLeft, false, int(width-(size*2+distance*2)*widthScale), int((size*3+distance*4)*heightScale), int(size*widthScale), int(size*heightScale));
 
     Settings = new Button(true, ButtonSettings, ButtonSettings, false, int(20*widthScale), int(height-(20+160)*heightScale), int(160*widthScale), int(160*heightScale));
     PrivacyPolicy = new Button(true, ButtonPrivacyPolicy, ButtonPrivacyPolicy, false, int(width/2-(110*3)*widthScale), int(height-(20+50*3)*heightScale), int(220*3*widthScale), int(50*3*heightScale));
@@ -170,6 +179,13 @@ void setup() {
   setupBGAnimation();
   player = new Player(0, -1, blockSize, blockSize);
   LevelX.img = levelXImage(level);
+
+  for (int i = 0; i < backgroundMusicPlayer.length; i++) {
+    if (backgroundMusicPlayer[i] != null) {
+      backgroundMusicPlayer[i].stop();
+      backgroundMusicPlayer[i].setVolume(0, 0);
+    }
+  }
 }
 
 //called in loop: It is responsible for continuously updating and rendering the graphics and animations of the program.
@@ -198,11 +214,21 @@ void draw() {
     for (Figure f : worldFigures) {
       f.show();
     }
-    for (int i = 0; i < projectiles.size(); i++) {
+    int listSize = projectiles.size();
+    for (int i = 0; i < listSize; i++) {
       projectiles.get(i).update();
-      if (projectiles.get(i).mustRemove()) {
+      if (projectiles.get(i).hit()) {
+        explosionAnimation(projectiles.get(i));
         projectiles.remove(i);
         i--;
+        listSize--;
+      } else if (projectiles.get(i).mustRemove()) {
+        projectiles.remove(i);
+        i--;
+        listSize--;
+      }
+      if (i == -1 || listSize == 0) {
+        break;
       }
     }
 
@@ -220,6 +246,8 @@ void draw() {
     if (editModeOn) {
       SwitchEdit.show();
       SwitchEditNeg.show();
+      RotateLeft.show();
+      RotateRight.show();
     }
 
 
@@ -359,6 +387,14 @@ void draw() {
       ellipseMode(CENTER);
       circle(touches[i].x, touches[i].y, 120);
     }
+    fill(0, 255, 0);
+    stroke(0, 255, 0);
+    line(mouseX-5*text, mouseY-5*text, mouseX+5*text, mouseY+5*text);
+    line(mouseX+5*text, mouseY-5*text, mouseX-5*text, mouseY+5*text);
+    stroke(255);
+    fill(0, 0, 0, 0);
+    ellipseMode(CENTER);
+    circle(mouseX, mouseY, 120);
   }
   if (coolDownTimer > 0) {
     coolDownTimer--;
@@ -591,7 +627,8 @@ void removeFigure(int id, boolean permanent) {
     world.remove(id);
     worldFigures.remove(id);
     saveJSONArray(world, "world.json");
-    reloadFigures("world");
+    //reloadFigures("world");
+    updateIDs();
     if (level > levelAmount && permanent) {
       saveJSONArray(world, "level"+level+".json");
     }
@@ -711,6 +748,12 @@ void reloadFigures(String fileName) {
   //println(level);
 }
 
+void updateIDs() {
+ for(int i = 0; i < worldFigures.size(); i++) {
+    worldFigures.get(i).id = i;
+ }
+}
+
 //android
 void touchEnded() {
   click(true);
@@ -727,14 +770,14 @@ void click(boolean touch) {
     //if (touch == false) {
     //println("click(): "+getFigureAt(cam.getInWorldCoord(mouseX, mouseY)).getClass());
     //}
-    if (editModeOn && !Edit.touch() && !Exit.touch() && !Right.touch() && !Left.touch() && !Up.touch() && !SwitchEdit.touch() && !Share.touch() && !Import.touch() && !(editModeOn && Down.touch()) && !SwitchEditNeg.touch() && !(mouseX+10 > Share.x && mouseY-10 < SwitchEdit.y+SwitchEdit.heightB)) {
+    if (editModeOn && !Right.touch() && !Left.touch() && !Up.touch() && !(editModeOn && Down.touch()) && !(mouseX+10 > Share.x && mouseY-10 < RotateLeft.y+RotateLeft.heightB) && mouseY<Left.y+Left.heightB && !(mouseX>Left.x && mouseX<Right.x+Right.widthB && mouseY>Left.y && mouseY<Left.y+Left.heightB)) {
       if (editMode != "remove") {
         Figure f = getFigureAt(cam.getInWorldCoord(mouseX, mouseY));
         if (f.id == -1) {
           if (editMode != "missileLauncher") {
             addFigure(editMode, int(cam.getInWorldCoordBlock(mouseX, mouseY).x), int(cam.getInWorldCoordBlock(mouseX, mouseY).y), 1, 1);
           } else {
-            addFigure(editMode, int(cam.getInWorldCoordBlock(mouseX, mouseY).x), int(cam.getInWorldCoordBlock(mouseX, mouseY).y), 1, 1, 100, int(random(0, 4)));
+            addFigure(editMode, int(cam.getInWorldCoordBlock(mouseX, mouseY).x), int(cam.getInWorldCoordBlock(mouseX, mouseY).y), 1, 1, 100, rotateMode);
           }
           playSound(click, 0.5*SoundEffectsSwitch.timer, true);
         }
@@ -770,6 +813,44 @@ void click(boolean touch) {
           editModeInt = 7;
         }
         updateEditMode();
+      }
+    }
+    if (RotateLeft.touch() &&(mouseButton==LEFT || touch)) {
+      if (editModeOn) {
+        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+        switch(rotateMode) {
+        case 0:
+          rotateMode = 2;
+          break;
+        case 1:
+          rotateMode = 3;
+          break;
+        case 2:
+          rotateMode = 1;
+          break;
+        case 3:
+          rotateMode = 0;
+          break;
+        }
+      }
+    }
+    if (RotateRight.touch() &&(mouseButton==LEFT || touch)) {
+      if (editModeOn) {
+        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+        switch(rotateMode) {
+        case 0:
+          rotateMode = 3;
+          break;
+        case 1:
+          rotateMode = 2;
+          break;
+        case 2:
+          rotateMode = 0;
+          break;
+        case 3:
+          rotateMode = 1;
+          break;
+        }
       }
     }
     if (Edit.touch()&&(mouseButton==LEFT || touch)) {
@@ -1111,13 +1192,23 @@ void loadImages() {
   missileLauncherGlow = loadImage(folder+"missileLauncherGlow.png");
   particleBullet = loadImage(folder+"particleBullet.png");
   ButtonSwitchNeg = loadImage(folder+"switchNeg.png");
+  ButtonRotateRight = loadImage(folder+"rotateRight.png");
+  ButtonRotateLeft = loadImage(folder+"rotateLeft.png");
   loaded = 20;
   println("loadImages(): all images loaded");
 }
 
 
 //This function loads the necessary sound files used in the program.
-void loadSounds() { //backgroundMusicPlayer
+void loadSounds() {//backgroundMusicPlayer
+  if (backgroundMusicPlayer != null) {
+    for (int i = 0; i < backgroundMusicPlayer.length; i++) {
+      if (backgroundMusicPlayer[i] != null) {
+        backgroundMusicPlayer[i].stop();
+        backgroundMusicPlayer[i].setVolume(0, 0);
+      }
+    }
+  }
   String[] filenames = {"A_Night_Of_Dizzy_Spells.mp3", "Night_Shade.mp3", "Underclocked.mp3", "MAZE.mp3", "Powerup.mp3", "Sour Rock.mp3"};
   backgroundMusicPlayer = new MediaPlayer[filenames.length];
   for (int i = 0; i < filenames.length; i++) {
@@ -1137,6 +1228,7 @@ void loadSounds() { //backgroundMusicPlayer
   loaded = 85;
   goalSound = loadSound(folder+"goal.mp3");
   tabChange = loadSound(folder+"tabChange.mp3");
+  explosion = loadSound(folder+"explosion.mp3");
   loaded = 100;
   println("loadSounds(): all sounds loaded");
   everythingLoaded = true;
@@ -1180,6 +1272,7 @@ void playSound(MediaPlayer sound, float amp, boolean multiple) {
         MediaPlayer sound2 = new MediaPlayer();
         sound2 = sound;
         sound2.seekTo(0);
+        sound2.setVolume(amp, amp);
         sound2.start();
       } else {
         sound.start();
@@ -1312,9 +1405,10 @@ void bulletAnimation(int x, int y, int minVX, int maxVX, int minVY, int maxVY) {
   particles.get(particles.size()-1).maxTime = int(random(4, 8));
 }
 
-void explosionAnimation(int x, int y, int minVX, int maxVX, int minVY, int maxVY) {
-  particleAnimation(x, y, particleBullet, 30, 60, maxVX, minVX, maxVY, minVY);
-  particleAnimation(x, y, particleBullet, 8, 60);
+void explosionAnimation(Figure f) {
+  particleAnimation(int(f.x), int(f.y), particleBullet, 30, 60, int(f.vx)+8, int(f.vx)-8, int(f.vy)+8, int(f.vy)-8);
+  playSound(explosion, (blockSize*blockSize*7f/sq(dist(player.x+player.w/2f, player.y+player.h/2f, f.x+f.w/2f, f.y+f.h/2f)))*SoundEffectsSwitch.timer, true);
+  //particleAnimation(x, y, particleBullet, 8, 60);
 }
 
 void particleAnimation(int x, int y, PImage img, int count) {

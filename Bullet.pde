@@ -28,6 +28,9 @@ class Bullet extends Figure {
     if (dist(x, y, player.x, player.y) > 100*blockSize) {
       return true;
     }
+    return false;
+  }
+  boolean hit() {
     for (Figure f : worldFigures) {
       if (f.hitbox.solid == true && f.getClass() != mi.getClass()) {
         if (hitbox.overlap(f.hitbox)) {

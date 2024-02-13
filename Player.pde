@@ -218,17 +218,16 @@ class Player extends Figure {
       playSound(collectCoin, 0.7*SoundEffectsSwitch.timer, true);
       println("Player: hitbox(): Coin collected");
     }
-    for(int i = 0; i < projectiles.size(); i++) {
-     if(projectiles.get(i).getClass() == bu.getClass()) {
-       if (hitbox.overlap(projectiles.get(i).hitbox) && !editModeOn) {
-         explosionAnimation(int(projectiles.get(i).x),int(projectiles.get(i).y), int(projectiles.get(i).vx)-8, int(projectiles.get(i).vx)+8, int(projectiles.get(i).vy)-8, int(projectiles.get(i).vy)+8);
-         resetToCheckpoint(true, int(projectiles.get(i).x), int(projectiles.get(i).y));
-         projectiles.remove(i);
-         i--;
-       }
-     }
+    for (int i = 0; i < projectiles.size(); i++) {
+      if (projectiles.get(i).getClass() == bu.getClass()) {
+        if (hitbox.overlap(projectiles.get(i).hitbox) && !editModeOn) {
+          explosionAnimation(projectiles.get(i));
+          resetToCheckpoint(true, int(projectiles.get(i).x), int(projectiles.get(i).y));
+          projectiles.remove(i);
+          i--;
+        }
+      }
     }
-    
   }
 
   void checkpoint(Figure f) {
@@ -275,10 +274,10 @@ class Player extends Figure {
           checkpointAnimation(int(x+w/2), int(y+h));
           gameFinished = true;
           coinsInWorld = 0;
-          for(Figure fig : worldFigures) {
-           if(fig.getClass() == co.getClass()) {
-             coinsInWorld++;
-           }
+          for (Figure fig : worldFigures) {
+            if (fig.getClass() == co.getClass()) {
+              coinsInWorld++;
+            }
           }
         } else {
           checkpointBlock = new PVector(int(f.x/blockSize), int((f.y/blockSize)-1));
