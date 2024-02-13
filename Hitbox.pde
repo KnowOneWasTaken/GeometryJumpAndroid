@@ -26,6 +26,9 @@ class Hitbox {
     this.y4 = y + h;
     this.w = w;
     this.h = h;
+    if(debug) {
+     show(); 
+    }
   }
 
   void show() {

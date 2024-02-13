@@ -44,16 +44,17 @@ class BackgroundFigure extends Figure {
   }
 
   @Override void show() {
-    rotation += vRotate/10.0f;
-
+    rotation += vRotate/10f;
+    pushMatrix();
     translate(int(x), int(y));
-    rotate(int(rotation)/(20.0*PI));
+    rotate(int(rotation)/(20f*PI));
     if (imgGlow != null) {
-      image(imgGlow, -w, -h, w*2, h*2);
+      image(imgGlow, -w, -h, w*2f, h*2f);
     }
-    image(img, -w/2, -h/2, w, h);
-    rotate(-int(rotation)/(20.0*PI));
+    image(img, -w/2f, -h/2f, w, h);
+    rotate(-int(rotation)/(20f*PI));
     translate(-int(x), -int(y));
+    popMatrix();
   }
 
   void checkPosition() {

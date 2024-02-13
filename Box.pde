@@ -11,18 +11,29 @@ class Wall extends Figure {
     box = wall;
     glow = wallGlow;
   }
+  
+  Wall() {
+    super();
+    this.blockX = 0;
+    this.blockY = 0;
+    this.blockW = -1;
+    this.blockH = -1;
+    this.id = -1;
+    box = wall;
+    glow = wallGlow;
+  }
 
   @Override void show() {
-    show(wall);
+    show(box);
   }
 
   @Override void showGlow() {
-    showGlow(wallGlow);
+    showGlow(glow);
   }
   void show(PImage img) {
     for (int i = 0; i < blockW; i++) {
       for (int j = 0; j < blockH; j++) {
-        cam.drawImage(img, x+i*blockSize, y+j*blockSize, blockSize, blockSize);
+        cam.drawImage(img, int(x)+i*blockSize, int(y)+j*blockSize, blockSize, blockSize);
       }
     }
   }

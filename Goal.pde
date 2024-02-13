@@ -6,7 +6,4 @@ class Goal extends Checkpoint {
   Goal() {
     super();
   }
-  @Override void showGlow() {
-    showGlow(goalGlow);
-  }
 }

@@ -34,14 +34,16 @@ MediaPlayer[] backgroundMusicPlayer;
 //These are variable declarations used throughout the program. They include objects such as figures, images, player, camera, and various flags and settings.
 PImage spike, wall, play, spikeGlow, slime, slimeGlow, wallGlow, remove, coin, coinGlow, checkpoint, checkpointGlow, BEditModeOn, BEditModeOff, BLevel1Glow, right, rightGlow, left, leftGlow, BLevelX, goalGlow, particleStar,
   particleWall, ButtonLEFT, ButtonRIGHT, ButtonUP, clear, ButtonEXIT, particleSlime, particleCheckpoint, bgSwitch, offSwitch, onSwitch, ButtonSwitch, ButtonShare, ButtonImport, ButtonDown, ButtonSettings, ButtonPrivacyPolicy,
-  ButtonMusic, Logo, goalAnimationBackground, ButtonOK, emptyCoin;
+  ButtonMusic, Logo, goalAnimationBackground, ButtonOK, emptyCoin, Bullet1, Bullet2, Bullet3, Bullet4, missileLauncherGlow, particleBullet, ButtonSwitchNeg;
 
-Button Edit, SkipRight, SkipLeft, LevelX, Left, Right, Up, Exit, SwitchEdit, Share, Import, Down, Settings, PrivacyPolicy, Music, OK;
+Button Edit, SkipRight, SkipLeft, LevelX, Left, Right, Up, Exit, SwitchEdit, SwitchEditNeg, Share, Import, Down, Settings, PrivacyPolicy, Music, OK;
 SwitchButton BgMusicSwitch, SoundEffectsSwitch, DebugSwitch;
 
 ArrayList<Particle> particles = new ArrayList<Particle>();
 
 ArrayList<Figure> worldFigures = new ArrayList<Figure>();
+ArrayList<Bullet> projectiles = new ArrayList<Bullet>();
+
 Player player;
 Cam cam;
 int blockSize = 60; //indicates how many pixels a block is large
@@ -65,6 +67,8 @@ Slime sl;
 Coin co;
 Checkpoint ch;
 Goal go;
+Bullet bu;
+MissileLauncher mi;
 
 boolean inGame = false; //indicates if the game is running (true) or if the player is in the menue (false)
 int level = 1; //selects level 1 as default
@@ -85,7 +89,7 @@ int coinsInWorld = 0; //Used to show how many coins the player has collected aft
 //called once at launch
 void setup() {
   fullScreen(P2D);
-  //size(480, 300);
+  //size(1600, 500, P2D);
 
   frameRate(50);
   loadImages();
@@ -96,56 +100,72 @@ void setup() {
   co = new Coin();
   ch = new Checkpoint();
   go = new Goal();
-
-  BgMusicSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width/2-80, int(height/3.5f), 160, 80);
-  SoundEffectsSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width/2-80, int(height/3.5f)+80*2+40, 160, 80);
-  DebugSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width/2-80, int(height/3.5f)+80*4+40*2, 160, 80);
-
-  //sets the start state of DebugSwitch to the correct position
-  DebugSwitch.clickEvent();
-  DebugSwitch.timer = 0;
+  bu = new Bullet();
+  mi = new MissileLauncher();
 
   cam = new Cam(0, 0);
 
-  LevelX = new Button(true, BLevelX, BLevel1Glow, false, int(width/2-320*(width/2400f)), int(height/2-220*(height/1080f)), int(640*(width/2400f)), int(440*(height/1080f)), 1, false, true);
-  SkipRight = new Button(true, right, rightGlow, false, int(width/2+(320+50)*(width/2400f)), int(height/2-75*(height/1080f)), int(100*(width/2400f)), int(150*(height/1080f)), 1, false, true);
-  SkipLeft = new Button(true, left, leftGlow, false, int(width/2+(-320-50-100)*(width/2400f)), int(height/2-75*(height/1080f)), int(100*(width/2400f)), int(150*(height/1080f)), 1, false, true);
-  Left = new Button(true, ButtonLEFT, clear, false, int(width/2+(-320-50-100-400)*(width/2400f)), int(height-305*(height/1080f)), int(400*(width/2400f)), int(300*(height/1080f)), 1, false, true);
-  Right = new Button(true, ButtonRIGHT, clear, false, int(width/2+(320+50+100)*(width/2400f)), int(height-305*(height/1080f)), int(400*(width/2400f)), int(300*(height/1080f)), 1, false, true);
-  Up = new Button(true, ButtonUP, clear, false, int(width/2-(300)*(width/2400f)), int(height-305*(height/1080f)), int(600*(width/2400f)), int(300*(height/1080f)), 1, false, true);
-  Down = new Button(true, ButtonUP, clear, false, int(width/2-(300)*(width/2400f)), int(height-305*(height/1080f) + (int(300*(height/1080f))/2 )), int(600*(width/2400f)), int(150*(height/1080f)), 1, false, true);
-
-  Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-180*(width/2400f)), int(105*(height/1080f)), int(160*(width/2400f)), int(80*(height/1080f)));
-  Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-180*(width/2400f)), int(20*(height/1080f)), int(160*(width/2400f)), int(80*(height/1080f)));
-  SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-180*(width/2400f)), int(190*(height/1080f)), int(160*(width/2400f)), int(80*(height/1080f)));
-  Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(180+80+5)*(width/2400f)), int(20*(height/1080f)), int(80*(width/2400f)), int(80*(height/1080f)));
-  Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(180+80+5)*(width/2400f)), int(105*(height/1080f)), int(80*(width/2400f)), int(80*(height/1080f)));
-  Settings = new Button(true, ButtonSettings, ButtonSettings, false, int(20*(width/2400f)), int((height-20-160)*(height/1080f)), int(160*(width/2400f)), int(160*(height/1080f)));
-  PrivacyPolicy = new Button(true, ButtonPrivacyPolicy, ButtonPrivacyPolicy, false, int((width/2-110*3)*(width/2400f)), int((height-20-50*3)*(height/1080f)), int(220*3*(width/2400f)), int(50*3*(height/1080f)));
-  Music = new Button(true, ButtonMusic, ButtonMusic, false, int((width/2-127)*(width/2400f)), int((height-20*2-50*3*2)*(height/1080f)), int(370*(width/2400f)), int(50*3*(height/1080f)));
-  OK = new Button(true, ButtonMusic, ButtonMusic, false, int((width/2-125)*(width/1080f)), int((height/6.4+855)*(height/2400f)), int(400*(width/1080f)), int(200*3*(height/2400f)));
+  float widthScale;
+  float heightScale;
 
   if (height > width) {
-    SkipRight = new Button(true, right, rightGlow, false, int(width/2+(550+40)*(width/1920f)), int(height/2-75*(height/1080f)), int(200*(width/1920f)), int(150*(height/1080f)), 1, false, true);
-    SkipLeft = new Button(true, left, leftGlow, false, int(width/2-(550+40+200)*(width/1920f)), int(height/2-75*(height/1080f)), int(200*(width/1920f)), int(150*(height/1080f)), 1, false, true);
-    LevelX = new Button(true, BLevelX, BLevel1Glow, false, int(width/2-(550)*(width/1920f)), int(height/2-110*(height/1080f)), int((1100)*(width/1920f)), int(220*(height/1080f)), 1, false, true);
+    widthScale = width/1080f;
+    heightScale = height/2400f;
+    SkipRight = new Button(true, right, rightGlow, false, int(width/2+(640/2+20)*widthScale), int(height/2-(350/2)*heightScale), int(160*widthScale), int(350*heightScale), 1, false, true);
+    SkipLeft = new Button(true, left, leftGlow, false, int(width/2-(160+640/2+20)*widthScale), int(height/2-(350/2)*heightScale), int(160*widthScale), int(350*heightScale), 1, false, true);
+    LevelX = new Button(true, BLevelX, BLevel1Glow, false, int(width/2-(640/2)*widthScale), int(height/2-(440/2)*heightScale), int((640)*widthScale), int(440*heightScale), 1, false, true);
 
-    Left = new Button(true, ButtonLEFT, clear, false, int((width/2f - 400/2 - 300) * width / 1080f), int((2400-10-450) * height / 2400f), int(300*(width/1080f)), int(450*(height/2400f)), 1, false, true);
-    Right = new Button(true, ButtonRIGHT, clear, false, int((width/2f + 400/2) * width / 1080f), int((2400-10-450) * height / 2400f), int(300*(width/1080f)), int(450*(height/2400f)), 1, false, true);
+    Left = new Button(true, ButtonLEFT, clear, false, int(width/2f - (400/2 + 300) * widthScale), int(height-(10+450) * heightScale), int(300*widthScale), int(450*heightScale), 1, false, true);
+    Right = new Button(true, ButtonRIGHT, clear, false, int(width/2f + (400/2) * widthScale), int(height-(10+450) * heightScale), int(300*widthScale), int(450*heightScale), 1, false, true);
 
-    Up = new Button(true, ButtonUP, clear, false, int((width/2f - 400/2) * width / 1080f), int((2400-10-450) * height / 2400f), int(400*(width/1080f)), int(450*(height/2400f)), 1, false, true);
-    Down = new Button(true, ButtonDown, clear, false, int((width/2f - 400/2) * width / 1080f), int((2400-10-450 + (450/2)) * height / 2400f), int(400*(width/1080f)), int(225*(height/2400f)), 1, false, true);
+    Up = new Button(true, ButtonUP, clear, false, int(width/2f - (400/2) * width / 1080f), int(height-(10+450) * heightScale), int(400*widthScale), int(450*heightScale), 1, false, true);
+    Down = new Button(true, ButtonDown, clear, false, int(width/2f - (400/2) * widthScale), int(height-((10+450) - (450/2)) * heightScale), int(400*widthScale), int(225*heightScale), 1, false, true);
 
-    Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-(10+140)*(width/1080f)), int(20*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
-    Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-(140+10)*(width/1080f)), int((20+140+10)*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
-    SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-(140+10)*(width/1080f)), int((20+140+10*2+140)*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
-    Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(140*2+10*2)*(width/1080f)), int(20*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
-    Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(140*2+10+10)*(width/1080f)), int((20+10+140)*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
-    Settings = new Button(true, ButtonSettings, ButtonSettings, false, int((20)*(width/1080f)), int((height-20-140)*(height/2400f)), int(140*(width/1080f)), int(140*(height/2400f)));
-    PrivacyPolicy = new Button(true, ButtonPrivacyPolicy, ButtonPrivacyPolicy, false, int((width/2-86*3)*(width/1080f)), int((height-20-50*3)*(height/2400f)), int(220*3*(width/1080f)), int(50*3*(height/2400f)));
-    Music = new Button(true, ButtonMusic, ButtonMusic, false, int((width/2-127)*(width/1080f)), int((height-20*2-50*3*2)*(height/2400f)), int(370*(width/1080f)), int(50*3*(height/2400f)));
-    OK = new Button(true, ButtonOK, ButtonOK, false, int((width/2-200)*(width/1080f)), int((height/5+855)*(height/2400f)), int(400*(width/1080f)), int(200*(height/2400f)));
+    Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-(10+140)*widthScale), int(20*heightScale), int(140*widthScale), int(140*heightScale));
+    Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-(140+10)*widthScale), int((20+140+10)*heightScale), int(140*widthScale), int(140*heightScale));
+    SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-(140+10)*widthScale), int((20+140+10*2+140)*heightScale), int(140*widthScale), int(140*heightScale));
+    SwitchEditNeg = new Button(true, ButtonSwitchNeg, ButtonSwitchNeg, false, int(width-(140*2+10*2)*widthScale), int((20+140+10*2+140)*heightScale), int(140*widthScale), int(140*heightScale));
+    Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(140*2+10*2)*widthScale), int(20*heightScale), int(140*widthScale), int(140*heightScale));
+    Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(140*2+10+10)*widthScale), int((20+10+140)*heightScale), int(140*widthScale), int(140*heightScale));
+    Settings = new Button(true, ButtonSettings, ButtonSettings, false, int((20)*widthScale), int(height-(20+140)*heightScale), int(140*widthScale), int(140*heightScale));
+    PrivacyPolicy = new Button(true, ButtonPrivacyPolicy, ButtonPrivacyPolicy, false, int(width/2-(86*3)*widthScale), int(height-(20+50*3)*heightScale), int(220*3*widthScale), int(50*3*heightScale));
+    Music = new Button(true, ButtonMusic, ButtonMusic, false, int(width/2-(127)*widthScale), int(height-(20*2+50*3*2)*heightScale), int(370*widthScale), int(50*3*heightScale));
+    OK = new Button(true, ButtonOK, ButtonOK, false, int((width/2-200*widthScale)), int((height/5+855*heightScale)), int(400*widthScale), int(200*heightScale));
+    gameZoom = gameZoom * widthScale;
+  } else {
+    widthScale = width/2400f;
+    heightScale = height/1080f;
+    LevelX = new Button(true, BLevelX, BLevel1Glow, false, int(width/2-320*widthScale), int(height/2-220*heightScale), int(640*widthScale), int(440*heightScale), 1, false, true);
+    SkipRight = new Button(true, right, rightGlow, false, int(width/2+(320+50)*widthScale), int(height/2-150*heightScale), int(150*widthScale), int(300*heightScale), 1, false, true);
+    SkipLeft = new Button(true, left, leftGlow, false, int(width/2+(-320-50-150)*widthScale), int(height/2-150*heightScale), int(150*widthScale), int(300*heightScale), 1, false, true);
+    Left = new Button(true, ButtonLEFT, clear, false, int(width/2+(-320-50-100-400)*widthScale), int(height-305*heightScale), int(400*widthScale), int(300*heightScale), 1, false, true);
+    Right = new Button(true, ButtonRIGHT, clear, false, int(width/2+(320+50+100)*widthScale), int(height-305*heightScale), int(400*widthScale), int(300*heightScale), 1, false, true);
+    Up = new Button(true, ButtonUP, clear, false, int(width/2-(300)*widthScale), int(height-305*heightScale), int(600*widthScale), int(300*heightScale), 1, false, true);
+    Down = new Button(true, ButtonUP, clear, false, int(width/2-(300)*widthScale), int(height-305*heightScale + (int(300*heightScale)/2 )), int(600*widthScale), int(150*heightScale), 1, false, true);
+
+    int size = 160;
+    int distance = 20;
+    Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-(size+distance)*widthScale), int(distance*heightScale), int(160*widthScale), int(160*heightScale));
+    Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-(size+distance)*widthScale), int((size+distance*2)*heightScale), int(size*widthScale), int(size*heightScale));
+    SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-(size+distance)*widthScale), int((size*2+distance*3)*heightScale), int(size*widthScale), int(size*heightScale));
+
+
+    Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(size*2+distance*2)*widthScale), int(distance*heightScale), int(160*widthScale), int(160*heightScale));
+    Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(size*2+distance*2)*widthScale), int((size+distance*2)*heightScale), int(size*widthScale), int(size*heightScale));
+    SwitchEditNeg = new Button(true, ButtonSwitchNeg, ButtonSwitchNeg, false, int(width-(size*2+distance*2)*widthScale), int((size*2+distance*3)*heightScale), int(size*widthScale), int(size*heightScale));
+
+    Settings = new Button(true, ButtonSettings, ButtonSettings, false, int(20*widthScale), int(height-(20+160)*heightScale), int(160*widthScale), int(160*heightScale));
+    PrivacyPolicy = new Button(true, ButtonPrivacyPolicy, ButtonPrivacyPolicy, false, int(width/2-(110*3)*widthScale), int(height-(20+50*3)*heightScale), int(220*3*widthScale), int(50*3*heightScale));
+    Music = new Button(true, ButtonMusic, ButtonMusic, false, int(width/2-(370/2)*widthScale), int(height-(20*2+50*3*2)*heightScale), int(370*widthScale), int(50*3*heightScale));
+    OK = new Button(true, ButtonOK, ButtonOK, false, int((width/2-200*widthScale)), int((855*heightScale)), int(400*widthScale), int(200*heightScale));
+    gameZoom = gameZoom * heightScale;
   }
+  BgMusicSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width/2-int(80*widthScale), int(height/4f), int(160*widthScale), int(80*heightScale));
+  SoundEffectsSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width/2-int(80*widthScale), int(height/4f)+int((80*2+40)*heightScale), int(160*widthScale), int(80*heightScale));
+  DebugSwitch = new SwitchButton(bgSwitch, offSwitch, onSwitch, width/2-int(80*widthScale), int(height/4f)+int((80*4+40*2)*heightScale), int(160*widthScale), int(80*heightScale));
+  //sets the start state of DebugSwitch to the correct position
+  DebugSwitch.clickEvent();
+  DebugSwitch.timer = 0;
 
   setupBGAnimation();
   player = new Player(0, -1, blockSize, blockSize);
@@ -154,6 +174,15 @@ void setup() {
 
 //called in loop: It is responsible for continuously updating and rendering the graphics and animations of the program.
 void draw() {
+  float widthScale;
+  float heightScale;
+  if (height > width) {
+    widthScale = width/1080f;
+    heightScale = height/2400f;
+  } else {
+    widthScale = width/2400f;
+    heightScale = height/1080f;
+  }
   background(0);
   if (inGame) {
     if (!gameFinished) {
@@ -169,15 +198,28 @@ void draw() {
     for (Figure f : worldFigures) {
       f.show();
     }
+    for (int i = 0; i < projectiles.size(); i++) {
+      projectiles.get(i).update();
+      if (projectiles.get(i).mustRemove()) {
+        projectiles.remove(i);
+        i--;
+      }
+    }
 
     //updates the player: adds Gravity to speed, moves the player while checking the hitboxes and displaying it when position is calculated
     player.update();
+
+
+    for (int i = 0; i < particles.size(); i++) {
+      particles.get(i).update();
+    }
 
     //displays the block, which is currently selected for edit,if you are in editModeOn
     showEditMode();
 
     if (editModeOn) {
       SwitchEdit.show();
+      SwitchEditNeg.show();
     }
 
 
@@ -203,25 +245,31 @@ void draw() {
       text("Timer: "+(framesSinceStarted/50f), width/2 - (textWidth("Timer: "+10.00f))/2, 50*2);
     }
     if (gameFinished) {
-      image(goalAnimationBackground, width/2-540, 475, 1080, 1080);
+      int startHeight = 0;
+      if (height > width) {
+        startHeight = height/5;
+      } else {
+        startHeight = 0;
+      }
+      textAlign(CENTER);
+      image(goalAnimationBackground, width/2-540*widthScale, startHeight, 1080*widthScale, 1080*heightScale);
       fill(255);
-      textSize(75);
-      textAlign(LEFT);
-      text("Game Finished!", width/2f-textWidth("Game Finished!")/2f, 475+200);
-      text("You took "+(framesSinceStarted/50f)+" seconds!", width/2f-textWidth("You took "+(framesSinceStarted/50f)+" seconds!")/2f, 475+200*2);
+      textSize(75*heightScale);
+      text("Game Finished!", width/2f, startHeight+200*heightScale);
+      text("You took "+(framesSinceStarted/50f)+" seconds!", width/2f, startHeight+200*2*heightScale);
       if ((coinsCollected+coinsInWorld) > 0) {
-        if((coinsCollected+coinsInWorld)>1) {
-        text("You have collected "+coinsCollected+"/"+(coinsCollected+coinsInWorld)+" coins!", width/2f-textWidth("You have collected "+coinsCollected+" coins!")/2f, 475+200f*3);
+        if ((coinsCollected+coinsInWorld)>1) {
+          text("You have collected "+coinsCollected+"/"+(coinsCollected+coinsInWorld)+" coins!", width/2f, startHeight+200f*3*heightScale);
         } else {
-          text("You have collected 1/"+(coinsCollected+coinsInWorld)+" coin!", width/2f-textWidth("You have collected "+coinsCollected+" coins!")/2f, 475+200f*3);
+          text("You have collected 1/"+(coinsCollected+coinsInWorld)+" coin!", width/2f, startHeight+200f*3*heightScale);
         }
       }
       textAlign(LEFT);
       for (int i = 0; i < (coinsCollected+coinsInWorld); i++) {
         if (i >= coinsCollected) {
-          image(emptyCoin, width/2-((coinsCollected+coinsInWorld)*120 + (coinsCollected+coinsInWorld-1)*20)/2 + i*(120+20), height/5f+665, 120, 120);
+          image(emptyCoin, width/2f-((((coinsCollected+coinsInWorld)*120 + (coinsCollected+coinsInWorld-1)*20)/2f) - i*(120+20))*widthScale, startHeight+665*heightScale, 120*widthScale, 120*heightScale);
         } else {
-          image(coin, width/2-((coinsCollected+coinsInWorld)*120 + (coinsCollected+coinsInWorld-1)*20)/2 + i*(120+20), height/5f+665, 120, 120);
+          image(coin, width/2f-((((coinsCollected+coinsInWorld)*120 + (coinsCollected+coinsInWorld-1)*20)/2f) - i*(120+20))*widthScale, startHeight+665*heightScale, 120*widthScale, 120*heightScale);
         }
       }
       OK.show();
@@ -239,28 +287,34 @@ void draw() {
         }
         touchCheck();
         if (!inSettings) {
-          imageMode(CENTER);
           if (height < width) {
-            image(Logo, width/2, height/4-160, 1024, 420);
+            image(Logo, width/2-1024*widthScale/2, height/4-160*heightScale-420*heightScale/2, 1024*widthScale, 420*heightScale);
           } else {
-            image(Logo, width/2, height/4, 1024, 420);
+            image(Logo, width/2-1024*widthScale/2, height/4-420*heightScale/2, 1024*widthScale, 420*heightScale);
           }
-          imageMode(CORNER);
           LevelX.show();
           SkipRight.show();
           SkipLeft.show();
           Settings.show();
+          if (level > levelAmount) {
+            fill(255);
+            textSize(55*heightScale);
+            //textAlign(CENTER);
+            if (height > width) {
+              text("Build your own level!\nHere you can be creative,\nbuild worlds and share\nthem with your friends!\nYou can also import existing\nlevels from the community", width/2f-textWidth("Build your own level!")/2, height-450*heightScale);
+            } else {
+              text("Build your own level! Here you can be creative, build worlds and share\nthem with your friends! You can also import existing levels from the community", width/2f-textWidth("Build your own level!")/2, height-220*heightScale);
+            }
+          }
         } else {//inSettings
           Settings.show();
           PrivacyPolicy.show();
           Music.show();
           fill(255);
-          textSize(30*2);
-          textAlign(CENTER);
-          text("Background-Music", width/2, int(height/3.5f)-20);
-          text("Sound-Effects", width/2, int(height/3.5f)+80+40+60);
-          text("Debug", width/2, int(height/3.5f)+80*3+40*2+60);
-          textAlign(LEFT);
+          textSize(30*2*heightScale);
+          text("Background-Music", width/2-textWidth("Background-Music")/2, int(height/4f)-20*heightScale);
+          text("Sound-Effects", width/2-textWidth("Sound-Effects")/2, int(height/4f)+(80+40+60)*heightScale);
+          text("Debug", width/2-textWidth("Debug")/2, int(height/4f)+(80*3+40*2+60)*heightScale);
           BgMusicSwitch.show();
           SoundEffectsSwitch.show();
           DebugSwitch.show();
@@ -274,21 +328,17 @@ void draw() {
     } else {
       playSound(loading, 0.7*SoundEffectsSwitch.timer);
       fill(255-loaded*2.55, loaded*2.55, 0);
-      textSize(200);
-      text(loaded+"%", width/2-180, height/2+67);
+      textSize(200*heightScale);
+      text(loaded+"%", width/2-180*widthScale, height/2+67*heightScale);
       stroke(255);
       fill(0, 0, 0, 0);
-      rect(width/2-200, height/2+100, 4*100, 50);
+      rect(width/2-200*widthScale, height/2+100*heightScale, 4*100*widthScale, 50*heightScale);
       fill(255-loaded*2.55, loaded*2.55, 0);
-      rect(width/2-200, height/2+100, 4*loaded, 50);
+      rect(width/2-200*widthScale, height/2+100*heightScale, 4*loaded*widthScale, 50*heightScale);
       //line(width/2,0,width/2,height);
       //line(0,height/2,width,height/2);
     }
   }
-  for (int i = 0; i < particles.size(); i++) {
-    particles.get(i).update();
-  }
-
   if (debug) {
     int text = 4;
     fill(255);
@@ -431,6 +481,10 @@ void showEditMode() {
       img = checkpoint;
       imgGlow = goalGlow;
       break;
+    case "missileLauncher":
+      img = wall;
+      imgGlow = missileLauncherGlow;
+      break;
     default:
       img = wall;
       imgGlow = wallGlow;
@@ -461,16 +515,26 @@ Figure createFigure(String ObjectClass, int x, int y, int w, int h, int id) {
     return new Checkpoint(x, y, w, h, id);
   case "goal":
     return new Goal(x, y, w, h, id);
+  case "missileLauncher":
+    return new MissileLauncher(x, y, w, h, id);
   default:
     println("createFigure(): Error: ObjectClass could'nt be resolved");
     return new Figure(0, 0, 0, 0, -1);
   }
 }
 
+Figure createFigure(String ObjectClass, int x, int y, int w, int h, int id, int extra1, int extra2, int extra3) {
+  if (ObjectClass.equals("missileLauncher")) {
+    return new MissileLauncher(x, y, w, h, id, extra1, extra2, extra3);
+  }
+  println("Error in createFigure(String, int, int, int, int, int, int, int, int): Could not recognize ObjectClass: "+ObjectClass);
+  return null;
+}
+
 
 /* This function adds a new figure to the world. It creates a JSON object representing the figure and adds it to the world JSONArray.
  The figure is also added to the worldFigures ArrayList. */
-void addFigure(String ObjectClass, int x, int y, int w, int h) {
+void addFigure(String ObjectClass, int x, int y, int w, int h, int extra1, int extra2) {
   JSONObject figure = new JSONObject();
   int id;
   if (world != null) {
@@ -482,13 +546,22 @@ void addFigure(String ObjectClass, int x, int y, int w, int h) {
   figure.setString("class", ObjectClass);
   figure.setInt("x", x);
   figure.setInt("y", y);
-  worldFigures.add(createFigure(ObjectClass, x, y, w, h, id));
+  if (ObjectClass.equals("missileLauncher")) {
+    println("addFigure() found missileLauncher");
+    figure.setInt("interval", extra1);
+    figure.setInt("offset", framesSinceStarted % extra1);
+    figure.setInt("direction", extra2);
+    worldFigures.add(createFigure(ObjectClass, x, y, w, h, id, extra1, framesSinceStarted % extra1, extra2));
+  } else {
+    worldFigures.add(createFigure(ObjectClass, x, y, w, h, id));
+  }
   world.setJSONObject(id, figure);
 
 
   if (level > levelAmount) {
     try {
       saveJSONArray(world, "level"+level+".json");
+      println("Saved world in level"+level+".json");
     }
     catch(Exception e) {
       println("Error in addFigure() while saving world into "+level+".json");
@@ -507,6 +580,10 @@ void addFigure(String ObjectClass, int x, int y, int w, int h) {
   println("addFigure(): New Figure saved in worldFigures, world and world.json: id: "+id);
 }
 
+void addFigure(String ObjectClass, int x, int y, int w, int h) {
+  addFigure(ObjectClass, x, y, w, h, -1, -1);
+}
+
 
 //This function removes a figure from the world based on its ID. It removes the corresponding JSON object from the world JSONArray and removes the figure from the worldFigures ArrayList.
 void removeFigure(int id, boolean permanent) {
@@ -515,7 +592,7 @@ void removeFigure(int id, boolean permanent) {
     worldFigures.remove(id);
     saveJSONArray(world, "world.json");
     reloadFigures("world");
-    if(level > levelAmount && permanent) {
+    if (level > levelAmount && permanent) {
       saveJSONArray(world, "level"+level+".json");
     }
   }
@@ -543,10 +620,20 @@ void startLevel(int lvl) {
       break;
     }
     println("startLevel(): Try to load "+fileName);
-    reloadFigures(fileName);
+    try {
+      reloadFigures(fileName);
+    }
+    catch(Exception e2) {
+      println("startLevel(): Error while reloading Figures");
+      println(e2);
+      world = new JSONArray();
+      addFigure("wall", 0, 0, 1, 1);
+      saveJSONArray(world, "level"+lvl+".json");
+    }
   }
   catch(Exception e) { //if the file couldn't be loaded: adds one block beneath the player
     println("startLevel(): No world map found");
+    println(e);
     world = new JSONArray();
     addFigure("wall", 0, 0, 1, 1);
     saveJSONArray(world, "level"+lvl+".json");
@@ -612,9 +699,14 @@ void reloadFigures(String fileName) {
   println("reloadFigures(): worldFigures cleard");
   for (int i = 0; i < world.size(); i++) {
     JSONObject jsn = world.getJSONObject(i);
-    worldFigures.add(createFigure(jsn.getString("class"), jsn.getInt("x"), jsn.getInt("y"), 1, 1, jsn.getInt("id")));
+    if (!jsn.getString("class").equals("missileLauncher")) {
+      worldFigures.add(createFigure(jsn.getString("class"), jsn.getInt("x"), jsn.getInt("y"), 1, 1, jsn.getInt("id")));
+    } else {
+      worldFigures.add(createFigure(jsn.getString("class"), jsn.getInt("x"), jsn.getInt("y"), 1, 1, jsn.getInt("id"), jsn.getInt("interval"), jsn.getInt("offset"), jsn.getInt("direction")));
+    }
   }
-  println("reloadFigures(): worldFigures from world added; level: "+level);
+
+  projectiles.clear();
   //println("Reloaded Figures of level: "+fileName);
   //println(level);
 }
@@ -635,11 +727,15 @@ void click(boolean touch) {
     //if (touch == false) {
     //println("click(): "+getFigureAt(cam.getInWorldCoord(mouseX, mouseY)).getClass());
     //}
-    if (editModeOn && !Edit.touch() && !Exit.touch() && !Right.touch() && !Left.touch() && !Up.touch() && !SwitchEdit.touch() && !Share.touch() && !Import.touch() && !(editModeOn && Down.touch()) && !(mouseX > Share.x && mouseY < SwitchEdit.y)) {
+    if (editModeOn && !Edit.touch() && !Exit.touch() && !Right.touch() && !Left.touch() && !Up.touch() && !SwitchEdit.touch() && !Share.touch() && !Import.touch() && !(editModeOn && Down.touch()) && !SwitchEditNeg.touch() && !(mouseX+10 > Share.x && mouseY-10 < SwitchEdit.y+SwitchEdit.heightB)) {
       if (editMode != "remove") {
         Figure f = getFigureAt(cam.getInWorldCoord(mouseX, mouseY));
         if (f.id == -1) {
-          addFigure(editMode, int(cam.getInWorldCoordBlock(mouseX, mouseY).x), int(cam.getInWorldCoordBlock(mouseX, mouseY).y), 1, 1);
+          if (editMode != "missileLauncher") {
+            addFigure(editMode, int(cam.getInWorldCoordBlock(mouseX, mouseY).x), int(cam.getInWorldCoordBlock(mouseX, mouseY).y), 1, 1);
+          } else {
+            addFigure(editMode, int(cam.getInWorldCoordBlock(mouseX, mouseY).x), int(cam.getInWorldCoordBlock(mouseX, mouseY).y), 1, 1, 100, int(random(0, 4)));
+          }
           playSound(click, 0.5*SoundEffectsSwitch.timer, true);
         }
       } else {
@@ -657,10 +753,21 @@ void click(boolean touch) {
     if (SwitchEdit.touch() &&(mouseButton==LEFT || touch)) {
       if (editModeOn) {
         playSound(click, 0.5*SoundEffectsSwitch.timer, true);
-        if (editModeInt < 6) {
+        if (editModeInt < 7) {
           editModeInt++;
         } else {
           editModeInt = 0;
+        }
+        updateEditMode();
+      }
+    }
+    if (SwitchEditNeg.touch() &&(mouseButton==LEFT || touch)) {
+      if (editModeOn) {
+        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+        if (editModeInt > 0) {
+          editModeInt--;
+        } else {
+          editModeInt = 7;
         }
         updateEditMode();
       }
@@ -709,11 +816,14 @@ void click(boolean touch) {
         userMessage("If you import them to preinstalled worlds, the change will not be saved.");
         userMessage("You can import them to empty worlds to permanently save them.");
         playSound(click, 0.5*SoundEffectsSwitch.timer, true);
-
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        intent.setType("application/json");
-        ((Activity) this.getActivity()).startActivityForResult(intent, 0);
-
+        try {
+          Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+          intent.setType("application/json");
+          ((Activity) this.getActivity()).startActivityForResult(intent, 0);
+        }
+        catch(Exception e) {
+          println(e);
+        }
         coolDownTimer=5;
       }
     }
@@ -883,6 +993,9 @@ void keyReleased() {
   if (key == 'h' || key == '4') {
     editModeInt = 4;
   }
+  if (key == 'l' || key == '7') {
+    editModeInt = 7;
+  }
   if (key == 'g') {
     gravity = !gravity;
   }
@@ -934,6 +1047,9 @@ void updateEditMode() {
   case 6:
     editMode = "coin";
     break;
+  case 7:
+    editMode = "missileLauncher";
+    break;
   default:
     editMode = "wall";
     break;
@@ -977,7 +1093,7 @@ void loadImages() {
   bgSwitch=loadImage(folder+"bg.png");
   offSwitch=loadImage(folder+"off.png");
   onSwitch=loadImage(folder+"on.png");
-  ButtonSwitch=loadImage(folder+"ButtonSwitch.png");
+  ButtonSwitch=loadImage(folder+"switch.png");
   ButtonShare = loadImage(folder+"share.png");
   ButtonImport = loadImage(folder+"ButtonImport.png");
   ButtonDown = loadImage(folder+"ButtonDOWN.png");
@@ -988,6 +1104,13 @@ void loadImages() {
   ButtonOK = loadImage(folder+"ok.png");
   goalAnimationBackground = loadImage(folder+"goalAnimationBackground.png");
   emptyCoin = loadImage(folder+"emptyCoin.png");
+  Bullet1 = loadImage(folder+"Bullet1.png");
+  Bullet2 = loadImage(folder+"Bullet2.png");
+  Bullet3 = loadImage(folder+"Bullet3.png");
+  Bullet4 = loadImage(folder+"Bullet4.png");
+  missileLauncherGlow = loadImage(folder+"missileLauncherGlow.png");
+  particleBullet = loadImage(folder+"particleBullet.png");
+  ButtonSwitchNeg = loadImage(folder+"switchNeg.png");
   loaded = 20;
   println("loadImages(): all images loaded");
 }
@@ -1184,6 +1307,16 @@ void particleAnimation(int x, int y, PImage img, int count, int size, int maxVX,
   }
 }
 
+void bulletAnimation(int x, int y, int minVX, int maxVX, int minVY, int maxVY) {
+  particles.add(new Particle(x+int(random(-8, 8)), y+int(random(-8, 8)), particleBullet, 20, maxVX, minVX, maxVY, minVY));
+  particles.get(particles.size()-1).maxTime = int(random(4, 8));
+}
+
+void explosionAnimation(int x, int y, int minVX, int maxVX, int minVY, int maxVY) {
+  particleAnimation(x, y, particleBullet, 30, 60, maxVX, minVX, maxVY, minVY);
+  particleAnimation(x, y, particleBullet, 8, 60);
+}
+
 void particleAnimation(int x, int y, PImage img, int count) {
   particleAnimation(x, y, img, count, 20);
 }
@@ -1300,7 +1433,13 @@ void importFile() {
 void userMessage(String s) {
   runOnUiThread(new Runnable() {
     public void run() {
-      Toast.makeText(getContext(), s, Toast.LENGTH_LONG).show();
+      try {
+        Toast.makeText(getContext(), s, Toast.LENGTH_LONG).show();
+      }
+      catch(Exception e) {
+        println("Error in userMessage(): Couldn't get context by getContext():");
+        println(e);
+      }
     }
   }
   );
@@ -1323,7 +1462,13 @@ void openWebsiteInBrowser(String url) {
   }
   catch (Exception e) {
     // Handle the case where no web browser is installed
-    Toast.makeText(getContext(), "No application can handle this request. Please install a web browser.", Toast.LENGTH_LONG).show();
     e.printStackTrace();
+    try {
+      Toast.makeText(getContext(), "No application can handle this request. Please install a web browser.", Toast.LENGTH_LONG).show();
+    }
+    catch(Exception e2) {
+      println("Error in openWebsiteInBrowser(): Couldn't get context by getContext():");
+      println(e2);
+    }
   }
 }

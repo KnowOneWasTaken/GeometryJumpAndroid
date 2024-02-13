@@ -1,5 +1,6 @@
 class Figure {
-  int x, y, w, h;
+  float x, y;
+  int w, h;
   float vx;
   float vy;
   int id = 0;
@@ -34,7 +35,7 @@ class Figure {
     id = -1;
     this.vx = 0;
     this.vy = 0;
-    hitbox = new Hitbox(x, y, w, h);
+    hitbox = new Hitbox(int(x), int(y), w, h);
     hitbox.solid = false;
   }
 
@@ -42,7 +43,7 @@ class Figure {
     fill(255);
     stroke(255, 0, 0);
     strokeWeight(2);
-    cam.drawRect(x, y, w, h);
+    cam.drawRect(int(x), int(y), w, h);
 
     if (editModeOn) {
       hitbox.show();
@@ -52,13 +53,14 @@ class Figure {
 
 
   void update() {
-    move(int(vx), int(vy));
+    move(vx, vy);
+    show();
   }
 
-  void move(int dx, int dy) {
+  void move(float dx, float dy) {
     x = x + dx;
     y = y + dy;
-    hitbox.updateCoord(x, y, w, h);
+    hitbox.updateCoord(int(x), int(y), w, h);
   }
 
   void showGlow() {

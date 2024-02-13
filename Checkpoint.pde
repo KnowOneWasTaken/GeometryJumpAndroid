@@ -7,10 +7,4 @@ class Checkpoint extends Wall {
   Checkpoint() {
     super(0,0,0,0,-1);
   }
-  @Override void show() {
-    show(checkpoint);
-  }
-  @Override void showGlow() {
-    showGlow(checkpointGlow);
-  }
 }

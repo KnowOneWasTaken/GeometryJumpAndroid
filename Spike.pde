@@ -40,7 +40,7 @@ class Spike extends Wall {
     }
     for (int i = 0; i < blockW; i++) {
       for (int j = 0; j < blockH; j++) {
-        cam.drawImage(spike, x+i*blockSize, y+j*blockSize, blockSize, blockSize);
+        cam.drawImage(spike, int(x)+i*blockSize, int(y)+j*blockSize, blockSize, blockSize);
         break; //nach oben
       }
     }

@@ -151,13 +151,6 @@ class Player extends Figure {
   void hitbox(boolean last) {
     grounded = false;
     int delID = -1;
-    //PVector move = new PVector(-vx*0.01, -vy*0.01);
-    //if(stepsX == 0) {
-    // move.x = 0;
-    //}
-    //if(stepsY == 0) {
-    // move.y = 0;
-    //}
     for (Figure f : nearbyFigures) {
       if (hitbox.overlap(f.hitbox)) {
         if (f.hitbox.solid == false) {
@@ -225,6 +218,17 @@ class Player extends Figure {
       playSound(collectCoin, 0.7*SoundEffectsSwitch.timer, true);
       println("Player: hitbox(): Coin collected");
     }
+    for(int i = 0; i < projectiles.size(); i++) {
+     if(projectiles.get(i).getClass() == bu.getClass()) {
+       if (hitbox.overlap(projectiles.get(i).hitbox) && !editModeOn) {
+         explosionAnimation(int(projectiles.get(i).x),int(projectiles.get(i).y), int(projectiles.get(i).vx)-8, int(projectiles.get(i).vx)+8, int(projectiles.get(i).vy)-8, int(projectiles.get(i).vy)+8);
+         resetToCheckpoint(true, int(projectiles.get(i).x), int(projectiles.get(i).y));
+         projectiles.remove(i);
+         i--;
+       }
+     }
+    }
+    
   }
 
   void checkpoint(Figure f) {

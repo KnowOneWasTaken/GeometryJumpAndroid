@@ -17,7 +17,7 @@ class Coin extends Wall {
     animation();
     for (int i = 0; i < blockW; i++) {
       for (int j = 0; j < blockH; j++) {
-        cam.drawImage(coin, x+i*blockSize, int(y+j*blockSize+animationY), blockSize, blockSize);
+        cam.drawImage(coin, int(x)+i*blockSize, int(y+j*blockSize+animationY), blockSize, blockSize);
       }
     }
   }
