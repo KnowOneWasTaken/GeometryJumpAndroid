@@ -88,17 +88,15 @@ class Player extends Figure {
       text("y: "+y, 10*text, (34+24)*text, 10*text);
       text("mouseX: "+cam.getInWorldX(mouseX), 10*text, (22+24+24)*text, 10*text);
       text("mouseY: "+cam.getInWorldY(mouseY), 10*text, (34+24+24)*text, 10*text);
-      text("BlockX: "+cam.getInWorldCoordBlock(mouseX, mouseY).x, 10*text, (22+24+24+24)*text, 10*text);
-      text("BlockY: "+cam.getInWorldCoordBlock(mouseX, mouseY).y, 10*text, (34+24+24+24)*text, 10*text);
-      text("editModeOn: "+editModeOn, 10*text, (22+24+24+24+24)*text, 10*text);
-      text("Coins collected: "+coinsCollected, 10*text, (34+24+24+24+24)*text, 10*text);
+      text("BlockX: "+cam.getInWorldCoordBlock(mouseX, mouseY).x, 10*text, (22+24*3)*text, 10*text);
+      text("BlockY: "+cam.getInWorldCoordBlock(mouseX, mouseY).y, 10*text, (34+24*3)*text, 10*text);
+      text("editModeOn: "+editModeOn, 10*text, (22+24*4)*text, 10*text);
+      text("Coins collected: "+coinsCollected, 10*text, (34+24*4)*text, 10*text);
+      text("frameRate: "+frameRate, 10*text, (34+24*4+12)*text, 10*text);
       if (editModeOn) {
-        text("gravity: "+gravity, 10*text, (34+24+24+24+24+12)*text, 10*text);
+        text("gravity: "+gravity, 10*text, (34+24*5)*text, 10*text);
       }
     }
-    //text("StepsX: "+stepsX, 10*text, (34+24+24+24+24+12+12)*text, 10*text);
-    //text("StepsY: "+stepsY, 10*text, (34+24+24+24+24+12+12+12)*text, 10*text);
-    //}
   }
 
   @Override void update() {
@@ -107,37 +105,8 @@ class Player extends Figure {
     for (Figure f : worldFigures) {
       if (dist(f.x+f.w, f.y+f.h, x+w, y+h) < 4*blockSize) {
         nearbyFigures.add(f);
-        //if (f.hitbox.solid == true && hitbox.overlap(f.hitbox)) {
-        //  PVector m = hitbox.findNearestExit(f.hitbox);
-        //  move(m.x, m.y);
-        //}
       }
     }
-
-    //boolean touch = false;
-    //stepsX = 0;
-    //stepsY = 0;
-    //while (touch == false && stepsX <100) {
-    //  move(vx*0.01, 0);
-    //  for (Figure f : nearbyFigures) {
-    //    if (f.hitbox.solid == true && hitbox.overlap(f.hitbox)) {
-    //      touch = true;
-    //    }
-    //  }
-    //  stepsX--;
-    //  stepsX++;
-    //}
-
-    //while (touch == false && stepsY <100) {
-    //  move(0, vy*0.01);
-    //  for (Figure f : nearbyFigures) {
-    //    if (f.hitbox.solid == true && hitbox.overlap(f.hitbox)) {
-    //      touch = true;
-    //      stepsY--;
-    //    }
-    //  }
-    //  stepsY++;
-    //}
 
     move(vx/2, vy*(blockSize/60f)/2);
     hitbox(false);
@@ -163,7 +132,7 @@ class Player extends Figure {
             delID = f.id;
           }
         } else {
-          PVector move = f.hitbox.findNearestExit(hitbox);
+          PVector move = hitbox.findNearestExit(f.hitbox, vx, vy);
           if (move.y != 0) {
             if (move.y < 0) {
               grounded = true;
@@ -172,7 +141,7 @@ class Player extends Figure {
               }
             }
             vy = 0;
-            vx = vx*0.6; //apply friction on moving left/right when walking on block (0.6 in v.1.0 and 0.8 for maxSpeed x walking = maxSpeed x flying)
+            //vx = vx*0.9; //apply friction on moving left/right when walking on block (0.6 in v.1.0 and 0.8 for maxSpeed x walking = maxSpeed x flying)
             if (abs(vx) < 0.00001) {
               vx = 0;
             }

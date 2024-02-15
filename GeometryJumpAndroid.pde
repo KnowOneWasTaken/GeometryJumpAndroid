@@ -199,11 +199,13 @@ void draw() {
     widthScale = width/2400f;
     heightScale = height/1080f;
   }
+  touchCheck();
   background(0);
   if (inGame) {
     if (!gameFinished) {
       framesSinceStarted++;
     }
+    ButtonTouchCheck();
     cam.update();
     keyListener();
 
@@ -265,8 +267,6 @@ void draw() {
     Exit.show();
     Share.show();
     Import.show();
-    touchCheck();
-    ButtonTouchCheck();
     if (!editModeOn) {
       fill(255);
       textSize(30*2);
@@ -313,7 +313,6 @@ void draw() {
           println("Error in Draw() while playing background - music: ");
           println(e2);
         }
-        touchCheck();
         if (!inSettings) {
           if (height < width) {
             image(Logo, width/2-1024*widthScale/2, height/4-160*heightScale-420*heightScale/2, 1024*widthScale, 420*heightScale);
@@ -402,12 +401,11 @@ void draw() {
 }
 
 void ButtonTouchCheck() {
-  boolean leftT = Left.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
-  boolean rightT = Right.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
-  boolean upT = Up.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
-  boolean downT = Down.touch();
+  println("SpeedX before check: "+player.vx);
   float speed = 2;
   float maxSpeed = 12;
+  boolean touchedLeft = false;
+  boolean touchedRight = false;
   if (touch) {
 
     //for (TouchEvent.Pointer pointer : touches) {
@@ -416,21 +414,30 @@ void ButtonTouchCheck() {
     //boolean upT = Up.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
     if (!editModeOn) {
       for (TouchEvent.Pointer pointer : touches) {
-        if (Left.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
+        println("Left.touch(): "+Left.touch(int(pointer.x), int(pointer.y)));
+        println("!touchedLeft: "+!touchedLeft);
+        println("player.vx > -maxSpeed: "+(player.vx > -maxSpeed));
+        if (Left.touch(int(pointer.x), int(pointer.y)) && !touchedLeft) {
+          touchedLeft = true;
           if (player.vx > -maxSpeed) {
             player.vx -= speed;
           }
         }
-        if (Right.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
+        if (Right.touch(int(pointer.x), int(pointer.y))  && !touchedRight) {
+          touchedRight = true;
           if (player.vx < maxSpeed) {
             player.vx += speed;
           }
         }
-        if (Up.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
+        if (Up.touch(int(pointer.x), int(pointer.y))) {
           player.jump();
         }
       }
     } else {
+      boolean leftT = Left.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
+      boolean rightT = Right.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
+      boolean upT = Up.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
+      boolean downT = Down.touch();
       player.vx = 0;
       if ((rightT && !leftT) || (!rightT && leftT)) {
         if (leftT) {
@@ -450,18 +457,32 @@ void ButtonTouchCheck() {
         }
       }
     }
-    //}
-  } else
+  } else {
     if (editModeOn) {
-      player.vy = 0;
-      player.vx = 0;
+      player.vy = player.vy*0.6;
     }
+  }
+  if (abs(player.vx) > maxSpeed) {
+    player.vx = maxSpeed * (player.vx/abs(player.vx));
+  }
+  println("touch: "+touch);
+  println("touchedLeft: "+touchedLeft);
+  println("touchedRight: "+touchedRight);
+  if (((touchedLeft && touchedRight) || (!touchedLeft && !touchedRight)) && player.grounded) {
+    player.vx = player.vx*0.6;
+  }
+  if (touchedLeft == false) {
+    background(50);
+  }
+  println("SpeedX after check: "+player.vx);
 }
 
 void touchCheck() {
   if (touches.length == 0) {
     touch = false;
   } else {
+    mouseX = int(touches[0].x);
+    mouseY = int(touches[0].y);
     touch = true;
   }
 }
@@ -749,9 +770,9 @@ void reloadFigures(String fileName) {
 }
 
 void updateIDs() {
- for(int i = 0; i < worldFigures.size(); i++) {
+  for (int i = 0; i < worldFigures.size(); i++) {
     worldFigures.get(i).id = i;
- }
+  }
 }
 
 //android
@@ -793,63 +814,65 @@ void click(boolean touch) {
         }
       }
     }
-    if (SwitchEdit.touch() &&(mouseButton==LEFT || touch)) {
-      if (editModeOn) {
-        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
-        if (editModeInt < 7) {
-          editModeInt++;
-        } else {
-          editModeInt = 0;
-        }
-        updateEditMode();
-      }
-    }
-    if (SwitchEditNeg.touch() &&(mouseButton==LEFT || touch)) {
-      if (editModeOn) {
-        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
-        if (editModeInt > 0) {
-          editModeInt--;
-        } else {
-          editModeInt = 7;
-        }
-        updateEditMode();
-      }
-    }
-    if (RotateLeft.touch() &&(mouseButton==LEFT || touch)) {
-      if (editModeOn) {
-        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
-        switch(rotateMode) {
-        case 0:
-          rotateMode = 2;
-          break;
-        case 1:
-          rotateMode = 3;
-          break;
-        case 2:
-          rotateMode = 1;
-          break;
-        case 3:
-          rotateMode = 0;
-          break;
+    if (editModeOn) {
+      if (SwitchEdit.touch() &&(mouseButton==LEFT || touch)) {
+        if (editModeOn) {
+          playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+          if (editModeInt < 7) {
+            editModeInt++;
+          } else {
+            editModeInt = 0;
+          }
+          updateEditMode();
         }
       }
-    }
-    if (RotateRight.touch() &&(mouseButton==LEFT || touch)) {
-      if (editModeOn) {
-        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
-        switch(rotateMode) {
-        case 0:
-          rotateMode = 3;
-          break;
-        case 1:
-          rotateMode = 2;
-          break;
-        case 2:
-          rotateMode = 0;
-          break;
-        case 3:
-          rotateMode = 1;
-          break;
+      if (SwitchEditNeg.touch() &&(mouseButton==LEFT || touch)) {
+        if (editModeOn) {
+          playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+          if (editModeInt > 0) {
+            editModeInt--;
+          } else {
+            editModeInt = 7;
+          }
+          updateEditMode();
+        }
+      }
+      if (RotateLeft.touch() &&(mouseButton==LEFT || touch)) {
+        if (editModeOn) {
+          playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+          switch(rotateMode) {
+          case 0:
+            rotateMode = 2;
+            break;
+          case 1:
+            rotateMode = 3;
+            break;
+          case 2:
+            rotateMode = 1;
+            break;
+          case 3:
+            rotateMode = 0;
+            break;
+          }
+        }
+      }
+      if (RotateRight.touch() &&(mouseButton==LEFT || touch)) {
+        if (editModeOn) {
+          playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+          switch(rotateMode) {
+          case 0:
+            rotateMode = 3;
+            break;
+          case 1:
+            rotateMode = 2;
+            break;
+          case 2:
+            rotateMode = 0;
+            break;
+          case 3:
+            rotateMode = 1;
+            break;
+          }
         }
       }
     }
@@ -923,13 +946,13 @@ void click(boolean touch) {
         gameFinished = false;
       }
     }
-  } else {
-    if (Settings.touch()&&(mouseButton==LEFT || touch)) {
-      inSettings = !inSettings;
-      playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
-    }
+  } else { //inGame == false
     if (everythingLoaded) {
-      coinAnimation(mouseX, mouseY);
+      if (Settings.touch()&&(mouseButton==LEFT || touch)) {
+        inSettings = !inSettings;
+        playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
+      }
+      println("coinAnimation");
       if (!inSettings) {
         if (LevelX.touch()&&(mouseButton==LEFT || touch)) {
           if (coolDownTimer <= 0) {
@@ -975,8 +998,6 @@ void click(boolean touch) {
           debug = !debug;
         }
       }
-    } else {
-      coinAnimation(mouseX, mouseY);
     }
   }
 }

@@ -153,15 +153,16 @@ class SwitchButton {
   }
 
   public boolean touch() {
-    for (int i = 0; i < touches.length; i++) {
-      if (touch(int(touches[i].x), int(touches[i].y))) {
+    if (hitbox) {
+      for (int i = 0; i < touches.length; i++) {
+        if (touch(int(touches[i].x), int(touches[i].y))) {
+          return true;
+        }
+      }
+      if (touch(mouseX, mouseY)) {
         return true;
       }
     }
-    if (touch(mouseX, mouseY)) {
-      return true;
-    }
-
     return false;
   }
 
