@@ -35,6 +35,8 @@ class Player extends Figure {
   void resetToCheckpoint(boolean animation, int px, int py) {
     if (animation) {
       deathAnimation(int(px), int(py));
+      reloadFigures("level"+level);
+      coinsCollected = 0;
     }
     if (getFigureAt(int(checkpointBlock.x*blockSize+blockSize/2), int(checkpointBlock.y*blockSize+blockSize+blockSize/2)).getClass() == ch.getClass()) {
       player.x = checkpointBlock.x*blockSize;
@@ -205,41 +207,19 @@ class Player extends Figure {
         if (f.getClass() == go.getClass()) {
           playSound(goalSound, 0.6*SoundEffectsSwitch.timer);
           println("Goal reached! Level " + level+" finished. You have collected "+coinsCollected+" Coins and took "+framesSinceStarted+" frames!");
-          JSONObject levelTimes;
-          try {
-            times = loadJSONArray("times.json");
-            println("player: hitbox(): times.json found and loaded");
-            try {
-              levelTimes = times.getJSONObject(level);
-              println("time loaded");
-            }
-            catch(Exception e2) {
-              println("Error in: Player: checkpoint(): ");
-              println("Exception 2: "+e2);
-              levelTimes = new JSONObject();
-              levelTimes.setInt("frames", 2147483647);
-            }
-            levelTimes.setInt("level", level);
-            int frames = levelTimes.getInt("frames");
-            println("Player: checkpoint(): frames Count in times.json found");
+          loadTimes();
+          int frames = getTime(level);
+          if (frames != -1) {
             if (framesSinceStarted < frames) {
-              levelTimes.setInt("frames", framesSinceStarted);
-              times.setJSONObject(level, levelTimes);
-              saveJSONArray(times, "times.json");
-              println("Player: checkpoint(): JSONArray for Times saved");
+              println("player.checkpoint(): Setting time because faster time found");
+              setTime(level, framesSinceStarted);
             }
+          } else {
+            println("player.checkpoint(): Setting time because no time found");
+            setTime(level, framesSinceStarted);
           }
-          catch(Exception e) {
-            println("Error in: Player: checkpoint(): ");
-            e.printStackTrace();
-            JSONArray times = new JSONArray();
-            levelTimes = new JSONObject();
-            levelTimes.setInt("frames", framesSinceStarted);
-            levelTimes.setInt("level", level);
-            times.setJSONObject(level, levelTimes );
-            saveJSONArray(times, "times.json");
-            println("Player: checkpoint(): New times.json made");
-          }
+          saveJSONArray(times, "times.json");
+          println("Saved times");
           checkpointAnimation(int(x+w/2), int(y+h));
           gameFinished = true;
           coinsInWorld = 0;
@@ -250,11 +230,53 @@ class Player extends Figure {
           }
         } else {
           checkpointBlock = new PVector(int(f.x/blockSize), int((f.y/blockSize)-1));
-          println("Player: checkpoint(): Checkpoint reached: "+checkpointBlock.x + ", "+checkpointBlock.y+ "; Vector: "+new PVector(int(f.x/blockSize), int((f.y/blockSize)-1)));
+          println("player.checkpoint(): Checkpoint reached: "+checkpointBlock.x + ", "+checkpointBlock.y+ "; Vector: "+new PVector(int(f.x/blockSize), int((f.y/blockSize)-1)));
           playSound(collectCoin, 0.7*SoundEffectsSwitch.timer, true);
           checkpointAnimation(int(x+w/2), int(y+h));
         }
       }
+    }
+  }
+
+  int getTime(int level) {
+    if (times != null) {
+      println("Size: "+times.size());
+      println(times);
+      for (int i = 0; i < times.size(); i++) {
+        try {
+          if (times.getJSONObject(i).getInt("level") == level) {
+            println("player.checkpoint(): Found time: "+ times.getJSONObject(i).getInt("frames"));
+            return  times.getJSONObject(i).getInt("frames");
+          }
+          println(times.getJSONObject(i));
+        }
+        catch(Exception e) {
+          println("Error in Player.getTime()");
+          println(e);
+        }
+      }
+    } else {
+      println("player.checkpoint(): array == null");
+    }
+    println("player.checkpoint(): No time found in array");
+    return -1;
+  }
+
+  void setTime(int level, int time) {
+    JSONObject o = new JSONObject();
+    o.setInt("level", level);
+    o.setInt("frames", time);
+    boolean saved = false;
+    for (int i = 0; i < times.size(); i++) {
+      if (times.getJSONObject(i).getInt("level") == level) {
+        times.setJSONObject(i, o);
+        saved = true;
+        println("player.setTime(): Saved in array at position "+i);
+      }
+    }
+    if (!saved) {
+      times.setJSONObject(times.size(), o);
+      println("player.setTime(): level: Saved in array at position "+times.size()+"; no entry dound and created a new entry");
     }
   }
 }
