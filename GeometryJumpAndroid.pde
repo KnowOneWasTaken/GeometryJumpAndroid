@@ -146,22 +146,25 @@ void setup() {
     LevelX = new Button(true, BLevelX, BLevel1Glow, false, int(width/2-320*widthScale), int(height/2-220*heightScale), int(640*widthScale), int(440*heightScale), 1, false, true);
     SkipRight = new Button(true, right, rightGlow, false, int(width/2+(320+50)*widthScale), int(height/2-150*heightScale), int(150*widthScale), int(300*heightScale), 1, false, true);
     SkipLeft = new Button(true, left, leftGlow, false, int(width/2+(-320-50-150)*widthScale), int(height/2-150*heightScale), int(150*widthScale), int(300*heightScale), 1, false, true);
-    Left = new Button(true, ButtonLEFT, clear, false, int(width/2+(-320-50-100-400)*widthScale), int(height-305*heightScale), int(400*widthScale), int(300*heightScale), 1, false, true);
-    Right = new Button(true, ButtonRIGHT, clear, false, int(width/2+(320+50+100)*widthScale), int(height-305*heightScale), int(400*widthScale), int(300*heightScale), 1, false, true);
-    Up = new Button(true, ButtonUP, clear, false, int(width/2-(300)*widthScale), int(height-305*heightScale), int(600*widthScale), int(300*heightScale), 1, false, true);
-    Down = new Button(true, ButtonUP, clear, false, int(width/2-(300)*widthScale), int(height-305*heightScale + (int(300*heightScale)/2 )), int(600*widthScale), int(150*heightScale), 1, false, true);
+    
+    Left = new Button(true, ButtonLEFT, clear, false, int(width/(4.53)+(-320-40)*widthScale), int(height-(90+320)*heightScale), int(320*widthScale), int(320*heightScale), 1, false, true);
+    Right = new Button(true, ButtonRIGHT, clear, false, int(width/(4.53)+(40)*widthScale), int(height-(90+320)*heightScale), int(320*widthScale), int(320*heightScale), 1, false, true);
+    Up = new Button(true, ButtonUP, clear, false, int(width-(240+320)*widthScale), int(height-(90+320)*heightScale), int(320*widthScale), int(320*heightScale), 1, false, true);
+    Down = new Button(true, ButtonDown, clear, false, int(width-(240+320)*widthScale), int(height-(90+160)*heightScale), int(320*widthScale), int(160*heightScale), 1, false, true);
 
     int size = 160;
     int distance = 20;
     Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-(size+distance)*widthScale), int(distance*heightScale), int(160*widthScale), int(160*heightScale));
     Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-(size+distance)*widthScale), int((size+distance*2)*heightScale), int(size*widthScale), int(size*heightScale));
-    SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-(size+distance)*widthScale), int((size*2+distance*3)*heightScale), int(size*widthScale), int(size*heightScale));
-    RotateRight = new Button(true, ButtonRotateRight, ButtonRotateRight, false, int(width-(size+distance)*widthScale), int((size*3+distance*4)*heightScale), int(size*widthScale), int(size*heightScale));
+    
+    SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-(size*3+distance*3)*widthScale), int(distance*heightScale), int(size*widthScale), int(size*heightScale));
+    RotateRight = new Button(true, ButtonRotateRight, ButtonRotateRight, false, int(width-(size*3+distance*3)*widthScale), int((size+distance*2)*heightScale), int(size*widthScale), int(size*heightScale));
 
     Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(size*2+distance*2)*widthScale), int(distance*heightScale), int(160*widthScale), int(160*heightScale));
     Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(size*2+distance*2)*widthScale), int((size+distance*2)*heightScale), int(size*widthScale), int(size*heightScale));
-    SwitchEditNeg = new Button(true, ButtonSwitchNeg, ButtonSwitchNeg, false, int(width-(size*2+distance*2)*widthScale), int((size*2+distance*3)*heightScale), int(size*widthScale), int(size*heightScale));
-    RotateLeft = new Button(true, ButtonRotateLeft, ButtonRotateLeft, false, int(width-(size*2+distance*2)*widthScale), int((size*3+distance*4)*heightScale), int(size*widthScale), int(size*heightScale));
+    
+    SwitchEditNeg = new Button(true, ButtonSwitchNeg, ButtonSwitchNeg, false, int(width-(size*4+distance*4)*widthScale), int(distance*heightScale), int(size*widthScale), int(size*heightScale));
+    RotateLeft = new Button(true, ButtonRotateLeft, ButtonRotateLeft, false, int(width-(size*4+distance*4)*widthScale), int((size+distance*2)*heightScale), int(size*widthScale), int(size*heightScale));
 
     Settings = new Button(true, ButtonSettings, ButtonSettings, false, int(20*widthScale), int(height-(20+160)*heightScale), int(160*widthScale), int(160*heightScale));
     PrivacyPolicy = new Button(true, ButtonPrivacyPolicy, ButtonPrivacyPolicy, false, int(width/2-(110*3)*widthScale), int(height-(20+50*3)*heightScale), int(220*3*widthScale), int(50*3*heightScale));
@@ -286,7 +289,7 @@ void draw() {
       text("Game Finished!", width/2f, startHeight+200*heightScale);
       text("You took "+(framesSinceStarted/50f)+" seconds!", width/2f, startHeight+200*2*heightScale);
       if ((coinsCollected+coinsInWorld) > 0) {
-        if ((coinsCollected+coinsInWorld)>1) {
+        if ((coinsCollected+coinsInWorld)>1  || coinsCollected == 0) {
           text("You have collected "+coinsCollected+"/"+(coinsCollected+coinsInWorld)+" coins!", width/2f, startHeight+200f*3*heightScale);
         } else {
           text("You have collected 1/"+(coinsCollected+coinsInWorld)+" coin!", width/2f, startHeight+200f*3*heightScale);
@@ -401,8 +404,10 @@ void draw() {
 }
 
 void ButtonTouchCheck() {
-  println("SpeedX before check: "+player.vx);
   float speed = 2;
+  if (!player.grounded) {
+    speed = 1.3;
+  }
   float maxSpeed = 12;
   boolean touchedLeft = false;
   boolean touchedRight = false;
@@ -414,9 +419,6 @@ void ButtonTouchCheck() {
     //boolean upT = Up.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
     if (!editModeOn) {
       for (TouchEvent.Pointer pointer : touches) {
-        println("Left.touch(): "+Left.touch(int(pointer.x), int(pointer.y)));
-        println("!touchedLeft: "+!touchedLeft);
-        println("player.vx > -maxSpeed: "+(player.vx > -maxSpeed));
         if (Left.touch(int(pointer.x), int(pointer.y)) && !touchedLeft) {
           touchedLeft = true;
           if (player.vx > -maxSpeed) {
@@ -465,16 +467,9 @@ void ButtonTouchCheck() {
   if (abs(player.vx) > maxSpeed) {
     player.vx = maxSpeed * (player.vx/abs(player.vx));
   }
-  println("touch: "+touch);
-  println("touchedLeft: "+touchedLeft);
-  println("touchedRight: "+touchedRight);
-  if (((touchedLeft && touchedRight) || (!touchedLeft && !touchedRight)) && player.grounded) {
-    player.vx = player.vx*0.6;
+  if (player.grounded) {//((touchedLeft && touchedRight) || (!touchedLeft && !touchedRight)) && 
+    player.vx = player.vx*0.8;
   }
-  if (touchedLeft == false) {
-    background(50);
-  }
-  println("SpeedX after check: "+player.vx);
 }
 
 void touchCheck() {
@@ -791,7 +786,7 @@ void click(boolean touch) {
     //if (touch == false) {
     //println("click(): "+getFigureAt(cam.getInWorldCoord(mouseX, mouseY)).getClass());
     //}
-    if (editModeOn && !Right.touch() && !Left.touch() && !Up.touch() && !(editModeOn && Down.touch()) && !(mouseX+10 > Share.x && mouseY-10 < RotateLeft.y+RotateLeft.heightB) && mouseY<Left.y+Left.heightB && !(mouseX>Left.x && mouseX<Right.x+Right.widthB && mouseY>Left.y && mouseY<Left.y+Left.heightB)) {
+    if (editModeOn && !Right.touch() && !Left.touch() && !Up.touch() && !(editModeOn && Down.touch()) && !(mouseX+10 > RotateLeft.x && mouseY-10 < RotateLeft.y+RotateLeft.heightB) && mouseY<Left.y+Left.heightB && !(mouseX+10>Left.x && mouseX-10<Right.x+Right.widthB && mouseY+10>Left.y && mouseY-10<Left.y+Left.heightB)) {
       if (editMode != "remove") {
         Figure f = getFigureAt(cam.getInWorldCoord(mouseX, mouseY));
         if (f.id == -1) {

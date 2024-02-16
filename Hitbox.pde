@@ -108,7 +108,7 @@ class Hitbox {
   }
 
   boolean pointInHitbox(int px, int py) {
-    return px > x1 && px < x2 && py > y1 && py < y3;
+    return px >= x1 && px <= x2 && py >= y1 && py <= y3;
   }
 
   boolean pointInHitbox(PVector v) {
