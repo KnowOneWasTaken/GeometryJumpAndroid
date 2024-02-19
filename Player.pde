@@ -67,7 +67,7 @@ class Player extends Figure {
   }
 
   void move(float dx, float dy) {
-    x = x + dx*(blockSize/60f);
+    x = x + dx;
     y = y + dy;
 
     hitbox.updateCoord(int(x), int(y), int(w), int(h));
@@ -110,9 +110,12 @@ class Player extends Figure {
       }
     }
 
-    move(vx/2, vy*(blockSize/60f)/2);
-    hitbox(false);
-    move(vx/2, vy*(blockSize/60f)/2);
+    for (int i = 0; i < floor(sqrt(sq(vx)+sq(vy))/20f)+1; i++) {
+      move(vx*(blockSize/60f)/(floor(sqrt(sq(vx)+sq(vy))/20f)+1), vy*(blockSize/60f)/(floor(sqrt(sq(vx)+sq(vy))/20f)+1));
+      if (i+1<floor(sqrt(sq(vx)+sq(vy))/20f)+1) {
+        hitbox(false);
+      }
+    }
     hitbox(true);
     blockX = int(cam.getInWorldCoordBlock(int(x), int(y)).x);
     blockY = int(cam.getInWorldCoordBlock(int(x), int(y)).y);
@@ -241,7 +244,6 @@ class Player extends Figure {
   int getTime(int level) {
     if (times != null) {
       println("Size: "+times.size());
-      println(times);
       for (int i = 0; i < times.size(); i++) {
         try {
           if (times.getJSONObject(i).getInt("level") == level) {

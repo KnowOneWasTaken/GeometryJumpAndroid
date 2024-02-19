@@ -198,6 +198,7 @@ void setup() {
 
 //called in loop: It is responsible for continuously updating and rendering the graphics and animations of the program.
 void draw() {
+  int millis = millis();
   float widthScale;
   float heightScale;
   if (height > width) {
@@ -241,7 +242,6 @@ void draw() {
         break;
       }
     }
-
     //updates the player: adds Gravity to speed, moves the player while checking the hitboxes and displaying it when position is calculated
     player.update();
 
@@ -249,7 +249,6 @@ void draw() {
     for (int i = 0; i < particles.size(); i++) {
       particles.get(i).update();
     }
-
     //displays the block, which is currently selected for edit,if you are in editModeOn
     showEditMode();
 
@@ -261,7 +260,6 @@ void draw() {
     }
 
 
-
     //plays the backgroundMusic[] sounds when they are loaded
     playBackgroundMusic();
     Left.show();
@@ -270,7 +268,6 @@ void draw() {
     if (editModeOn) {
       Down.show();
     }
-
     Exit.show();
     if (level > levelAmount ||debug) {
       Edit.show();
@@ -395,19 +392,24 @@ void draw() {
     textSize(10*text);
     noStroke();
     text("touch: "+touch, 10*text, height-10*text);
+    println(touches.length);
+    fill(255);
+    textSize(10*text);
+    noStroke();
     for (int i = 0; i < touches.length; i++) {
-      fill(255);
-      textSize(10*text);
-      noStroke();
-      text("touches["+i+"]: "+touches[i].x+", "+touches[i].y, 10*text, height-(10*text+12*text*(i+1)));
-      fill(255, 0, 0);
-      stroke(255, 0, 0);
-      line(touches[i].x-5*text, touches[i].y-5*text, touches[i].x+5*text, touches[i].y+5*text);
-      line(touches[i].x+5*text, touches[i].y-5*text, touches[i].x-5*text, touches[i].y+5*text);
-      stroke(255);
-      fill(0, 0, 0, 0);
-      ellipseMode(CENTER);
-      circle(touches[i].x, touches[i].y, 120);
+      float tx = touches[i].x;
+      float ty = touches[i].y;
+      text("touches["+i+"]: "+tx+", "+ty, 10*text, height-(10*text+12*text*(i+1)));
+      
+      //Causes performance issues
+      //fill(255, 0, 0);
+      //stroke(255, 0, 0);
+      //line(tx-5*text, ty-5*text, tx+5*text, ty+5*text);
+      //line(tx+5*text, ty-5*text, tx-5*text, ty+5*text);
+      //stroke(255);
+      //fill(0, 0, 0, 0);
+      //ellipseMode(CENTER);
+      //circle(tx, ty, 120);
     }
     fill(0, 255, 0);
     stroke(0, 255, 0);
