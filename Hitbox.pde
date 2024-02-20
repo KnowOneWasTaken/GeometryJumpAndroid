@@ -26,8 +26,8 @@ class Hitbox {
     this.y4 = y + h;
     this.w = w;
     this.h = h;
-    if(debug) {
-     show(); 
+    if (debug) {
+      show();
     }
   }
 
@@ -49,55 +49,37 @@ class Hitbox {
     return false;
   }
 
-
-
-  PVector findNearestExit(Hitbox h) {
-    if (overlap(h)) {
-      //boolean[] corners = findCornerInHitbox(h);
-
-      int[] dist = new int[4];
-      dist[0] = h.y1 - y1;
-      dist[1] = y3 - h.y3;
-      dist[2] = x2 - h.x2;
-      dist[3] = h.x1 - x1;
-      int[] richtung = new int[4];
-      richtung[0] = 0;
-      richtung[1] = 1;
-      richtung[2] = 2;
-      richtung[3] = 3;
-      for (int i = 0; i < dist.length; i++) {
-        for (int j = 0; j < dist.length-1; j++) {
-          if (dist[j] < dist[j+1]) {
-            int temp = dist[j];
-            int tempS = richtung[j];
-            dist[j] = dist[j+1];
-            dist[j+1] = temp;
-            richtung[j] = richtung[j+1];
-            richtung[j+1] = tempS;
-          }
+  PVector findNearestExit(Hitbox hitbox, float vx, float vy) {
+    if (overlap(hitbox)) {
+      boolean xMovement = abs(vx) > 0.01; //true
+      boolean yMovement = abs(vy) > 0.01; //false
+      boolean right = vx > 0; //false
+      boolean down = vy > 0; //false
+      int xExit = 0;
+      int yExit = 0;
+      if (xMovement && right) { //false
+        xExit = hitbox.x1 - x2;
+      }
+      if (xMovement && !right) { //true
+        xExit = hitbox.x2 - x1;
+      }
+      if (yMovement && down) {
+        yExit = hitbox.y1 - y3;
+      }
+      if (yMovement && !down) {
+        yExit = hitbox.y3 - y1;
+      }
+      if (yMovement && xMovement) {
+        if (abs(xExit) < abs(yExit)) {
+          return new PVector(xExit, 0);
+        } else {
+          return new PVector(0, yExit);
         }
+      } else if (xMovement) {
+        return new PVector(xExit, 0);
+      } else {
+        return new PVector(0, yExit);
       }
-      int distanz = dist[3];
-      int r = richtung[3];
-      ;
-      for (int i = 2; i <= 0; i--) {
-        if (dist[i] < dist[i+1] && dist[i] > 0) {
-          distanz = dist[i];
-          r = richtung[i];
-        }
-      }
-      switch(r) {
-      case 0:
-        return new PVector(0, -distanz-h.h);
-      case 1:
-        return new PVector(0, distanz+h.h);
-      case 2:
-        return new PVector(distanz+h.w, 0);
-      case 3:
-        return new PVector(-distanz-h.w, 0);
-      }
-
-      return null;
     } else {
       return null;
     }
@@ -124,7 +106,7 @@ class Hitbox {
   }
 
   boolean pointInHitbox(int px, int py) {
-    return px > x1 && px < x2 && py > y1 && py < y3;
+    return px >= x1 && px <= x2 && py >= y1 && py <= y3;
   }
 
   boolean pointInHitbox(PVector v) {

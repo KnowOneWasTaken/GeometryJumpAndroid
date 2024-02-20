@@ -163,16 +163,17 @@ class Button {
 
 
   boolean touch() {
-    for (TouchEvent.Pointer pointer : touches) {
-      if (touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)) && touch) {
+    if (hitbox) {
+      for (TouchEvent.Pointer pointer : touches) {
+        if (touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)) && touch) {
+          return true;
+        }
+      }
+      if (touch(mouseX, mouseY) && touch) {
+        noTint();
         return true;
       }
     }
-    if (touch(mouseX, mouseY) && touch) {
-      noTint();
-      return true;
-    }
-
     return false;
   }
 

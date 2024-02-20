@@ -1,5 +1,6 @@
 class Cam {
   int x, y;
+  float camDampener = 0.72; //1 -> infinite large dampener; 0-> no dampener
   Cam(int x, int y) {
     this.x = x;
     this.y = y;
@@ -10,16 +11,22 @@ class Cam {
   }
 
   void drawLine(int x1, int y1, int x2, int y2) {
-    line(x1-x, y1-y, x2-x, y2-y);
+    line((x1-x)*gameZoom, (y1-y)*gameZoom, (x2-x)*gameZoom, (y2-y)*gameZoom);
   }
 
   void update() {
-    x = int((player.x + player.w/2) - (width/2)/gameZoom);
-    y = int((player.y + player.h/2) - (height/2)/gameZoom);
+    int playerX = int((player.x + player.w/2) - (width/2)/gameZoom);
+    int playerY = int((player.y + player.h/2) - (height/2)/gameZoom);
+    x = int(camDampener *(x-playerX) + playerX);
+    y = int(camDampener * (y-playerY) + playerY);
   }
 
   void drawImage(PImage img, int x1, int y1, int w1, int h1) {
     image(img, (x1-x)*gameZoom, (y1-y)*gameZoom, w1*gameZoom, h1*gameZoom);
+  }
+  
+  void drawText(String s, int x1, int y1) {
+    text(s, (x1-x)*gameZoom, (y1-y)*gameZoom);
   }
 
   PVector getInImageCoord(int px, int py) {

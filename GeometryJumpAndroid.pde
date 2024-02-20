@@ -48,8 +48,12 @@ Player player;
 Cam cam;
 int blockSize = 60; //indicates how many pixels a block is large
 boolean[] keysPressed = new boolean[65536]; //used to check if a key is pressed or not
+
 JSONArray world; //The json-Array that contains the figures of the environment
 JSONArray times; //contains the times (frame-Counts) in which the player has completed the levels (best scores)
+JSONObject time; //contains the time for the currrently selected level
+boolean timeFound;
+
 String editMode = "wall"; //default for the world-edit mode: selects box/walls as the default to add to your world in editModeOn
 int rotateMode = 0;
 int editModeInt = 1;
@@ -90,10 +94,12 @@ int coinsInWorld = 0; //Used to show how many coins the player has collected aft
 //called once at launch
 void setup() {
   fullScreen(P2D);
-  //size(1600, 500, P2D);
+  //size(720, 1600, P2D);
 
   frameRate(50);
   loadImages();
+  player = new Player(0, -1, blockSize, blockSize);
+  loadTimes();
   thread("loadSounds");
 
   s = new Spike();
@@ -146,22 +152,25 @@ void setup() {
     LevelX = new Button(true, BLevelX, BLevel1Glow, false, int(width/2-320*widthScale), int(height/2-220*heightScale), int(640*widthScale), int(440*heightScale), 1, false, true);
     SkipRight = new Button(true, right, rightGlow, false, int(width/2+(320+50)*widthScale), int(height/2-150*heightScale), int(150*widthScale), int(300*heightScale), 1, false, true);
     SkipLeft = new Button(true, left, leftGlow, false, int(width/2+(-320-50-150)*widthScale), int(height/2-150*heightScale), int(150*widthScale), int(300*heightScale), 1, false, true);
-    Left = new Button(true, ButtonLEFT, clear, false, int(width/2+(-320-50-100-400)*widthScale), int(height-305*heightScale), int(400*widthScale), int(300*heightScale), 1, false, true);
-    Right = new Button(true, ButtonRIGHT, clear, false, int(width/2+(320+50+100)*widthScale), int(height-305*heightScale), int(400*widthScale), int(300*heightScale), 1, false, true);
-    Up = new Button(true, ButtonUP, clear, false, int(width/2-(300)*widthScale), int(height-305*heightScale), int(600*widthScale), int(300*heightScale), 1, false, true);
-    Down = new Button(true, ButtonUP, clear, false, int(width/2-(300)*widthScale), int(height-305*heightScale + (int(300*heightScale)/2 )), int(600*widthScale), int(150*heightScale), 1, false, true);
+
+    Left = new Button(true, ButtonLEFT, clear, false, int(width/(4.53)+(-320-40)*widthScale), int(height-(90+320)*heightScale), int(320*widthScale), int(320*heightScale), 1, false, true);
+    Right = new Button(true, ButtonRIGHT, clear, false, int(width/(4.53)+(40)*widthScale), int(height-(90+320)*heightScale), int(320*widthScale), int(320*heightScale), 1, false, true);
+    Up = new Button(true, ButtonUP, clear, false, int(width-(240+320)*widthScale), int(height-(90+320)*heightScale), int(320*widthScale), int(320*heightScale), 1, false, true);
+    Down = new Button(true, ButtonDown, clear, false, int(width-(240+320)*widthScale), int(height-(90+160)*heightScale), int(320*widthScale), int(160*heightScale), 1, false, true);
 
     int size = 160;
     int distance = 20;
     Exit = new Button(true, ButtonEXIT, ButtonEXIT, false, int(width-(size+distance)*widthScale), int(distance*heightScale), int(160*widthScale), int(160*heightScale));
     Edit = new Button(true, BEditModeOff, BEditModeOn, false, int(width-(size+distance)*widthScale), int((size+distance*2)*heightScale), int(size*widthScale), int(size*heightScale));
-    SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-(size+distance)*widthScale), int((size*2+distance*3)*heightScale), int(size*widthScale), int(size*heightScale));
-    RotateRight = new Button(true, ButtonRotateRight, ButtonRotateRight, false, int(width-(size+distance)*widthScale), int((size*3+distance*4)*heightScale), int(size*widthScale), int(size*heightScale));
+
+    SwitchEdit = new Button(true, ButtonSwitch, ButtonSwitch, false, int(width-(size*3+distance*3)*widthScale), int(distance*heightScale), int(size*widthScale), int(size*heightScale));
+    RotateRight = new Button(true, ButtonRotateRight, ButtonRotateRight, false, int(width-(size*3+distance*3)*widthScale), int((size+distance*2)*heightScale), int(size*widthScale), int(size*heightScale));
 
     Share = new Button(true, ButtonShare, ButtonShare, false, int(width-(size*2+distance*2)*widthScale), int(distance*heightScale), int(160*widthScale), int(160*heightScale));
     Import = new Button(true, ButtonImport, ButtonImport, false, int(width-(size*2+distance*2)*widthScale), int((size+distance*2)*heightScale), int(size*widthScale), int(size*heightScale));
-    SwitchEditNeg = new Button(true, ButtonSwitchNeg, ButtonSwitchNeg, false, int(width-(size*2+distance*2)*widthScale), int((size*2+distance*3)*heightScale), int(size*widthScale), int(size*heightScale));
-    RotateLeft = new Button(true, ButtonRotateLeft, ButtonRotateLeft, false, int(width-(size*2+distance*2)*widthScale), int((size*3+distance*4)*heightScale), int(size*widthScale), int(size*heightScale));
+
+    SwitchEditNeg = new Button(true, ButtonSwitchNeg, ButtonSwitchNeg, false, int(width-(size*4+distance*4)*widthScale), int(distance*heightScale), int(size*widthScale), int(size*heightScale));
+    RotateLeft = new Button(true, ButtonRotateLeft, ButtonRotateLeft, false, int(width-(size*4+distance*4)*widthScale), int((size+distance*2)*heightScale), int(size*widthScale), int(size*heightScale));
 
     Settings = new Button(true, ButtonSettings, ButtonSettings, false, int(20*widthScale), int(height-(20+160)*heightScale), int(160*widthScale), int(160*heightScale));
     PrivacyPolicy = new Button(true, ButtonPrivacyPolicy, ButtonPrivacyPolicy, false, int(width/2-(110*3)*widthScale), int(height-(20+50*3)*heightScale), int(220*3*widthScale), int(50*3*heightScale));
@@ -177,7 +186,6 @@ void setup() {
   DebugSwitch.timer = 0;
 
   setupBGAnimation();
-  player = new Player(0, -1, blockSize, blockSize);
   LevelX.img = levelXImage(level);
 
   for (int i = 0; i < backgroundMusicPlayer.length; i++) {
@@ -199,12 +207,16 @@ void draw() {
     widthScale = width/2400f;
     heightScale = height/1080f;
   }
+  touchCheck();
   background(0);
+
   if (inGame) {
     if (!gameFinished) {
       framesSinceStarted++;
     }
+    ButtonTouchCheck();
     cam.update();
+    player.update();
     keyListener();
 
     //Calls show() and showGlow() for every Figure of the worldFigures
@@ -214,32 +226,36 @@ void draw() {
     for (Figure f : worldFigures) {
       f.show();
     }
-    int listSize = projectiles.size();
-    for (int i = 0; i < listSize; i++) {
-      projectiles.get(i).update();
-      if (projectiles.get(i).hit()) {
-        explosionAnimation(projectiles.get(i));
-        projectiles.remove(i);
-        i--;
-        listSize--;
-      } else if (projectiles.get(i).mustRemove()) {
-        projectiles.remove(i);
-        i--;
-        listSize--;
+
+    try {
+      boolean[] removeProjectile = new boolean[projectiles.size()];
+      for (int i = 0; i < projectiles.size(); i++) {
+        projectiles.get(i).update();
+        removeProjectile[i] = false;
+        if (projectiles.get(i).hit()) {
+          explosionAnimation(projectiles.get(i));
+          removeProjectile[i] = true;
+        } else if (projectiles.get(i).mustRemove()) {
+          removeProjectile[i] = true;
+        }
       }
-      if (i == -1 || listSize == 0) {
-        break;
+
+      for (int i = projectiles.size()-1; i>-1; i--) {
+        if (removeProjectile[i]) {
+          projectiles.remove(i);
+        }
       }
     }
-
+    catch(Exception e) {
+      println("Error in draw: Error in projectiles for-loop");
+      println(e);
+    }
     //updates the player: adds Gravity to speed, moves the player while checking the hitboxes and displaying it when position is calculated
-    player.update();
 
 
     for (int i = 0; i < particles.size(); i++) {
       particles.get(i).update();
     }
-
     //displays the block, which is currently selected for edit,if you are in editModeOn
     showEditMode();
 
@@ -251,22 +267,20 @@ void draw() {
     }
 
 
-
     //plays the backgroundMusic[] sounds when they are loaded
     playBackgroundMusic();
-    Edit.show();
     Left.show();
     Right.show();
     Up.show();
     if (editModeOn) {
       Down.show();
     }
-
     Exit.show();
-    Share.show();
-    Import.show();
-    touchCheck();
-    ButtonTouchCheck();
+    if (level > levelAmount ||debug) {
+      Edit.show();
+      Share.show();
+      Import.show();
+    }
     if (!editModeOn) {
       fill(255);
       textSize(30*2);
@@ -286,7 +300,7 @@ void draw() {
       text("Game Finished!", width/2f, startHeight+200*heightScale);
       text("You took "+(framesSinceStarted/50f)+" seconds!", width/2f, startHeight+200*2*heightScale);
       if ((coinsCollected+coinsInWorld) > 0) {
-        if ((coinsCollected+coinsInWorld)>1) {
+        if ((coinsCollected+coinsInWorld)>1  || coinsCollected == 0) {
           text("You have collected "+coinsCollected+"/"+(coinsCollected+coinsInWorld)+" coins!", width/2f, startHeight+200f*3*heightScale);
         } else {
           text("You have collected 1/"+(coinsCollected+coinsInWorld)+" coin!", width/2f, startHeight+200f*3*heightScale);
@@ -313,8 +327,20 @@ void draw() {
           println("Error in Draw() while playing background - music: ");
           println(e2);
         }
-        touchCheck();
         if (!inSettings) {
+          if (timeFound) {
+            try {
+              fill(255);
+              textSize(80*heightScale);
+              //int(height/2-(440/2)*heightScale)
+              text("Personal Best: "+(time.getInt("frames")/50f), width/2f-textWidth("Personal Best: "+(time.getInt("frames")/50f))/2, int(height/2+(440/2+120)*heightScale));
+            }
+            catch(Exception e2) {
+              println("Error in Draw() while trying to draw time");
+              println(e2);
+            }
+          }
+
           if (height < width) {
             image(Logo, width/2-1024*widthScale/2, height/4-160*heightScale-420*heightScale/2, 1024*widthScale, 420*heightScale);
           } else {
@@ -373,19 +399,23 @@ void draw() {
     textSize(10*text);
     noStroke();
     text("touch: "+touch, 10*text, height-10*text);
+    fill(255);
+    textSize(10*text);
+    noStroke();
     for (int i = 0; i < touches.length; i++) {
-      fill(255);
-      textSize(10*text);
-      noStroke();
-      text("touches["+i+"]: "+touches[i].x+", "+touches[i].y, 10*text, height-(10*text+12*text*(i+1)));
-      fill(255, 0, 0);
-      stroke(255, 0, 0);
-      line(touches[i].x-5*text, touches[i].y-5*text, touches[i].x+5*text, touches[i].y+5*text);
-      line(touches[i].x+5*text, touches[i].y-5*text, touches[i].x-5*text, touches[i].y+5*text);
-      stroke(255);
-      fill(0, 0, 0, 0);
-      ellipseMode(CENTER);
-      circle(touches[i].x, touches[i].y, 120);
+      float tx = touches[i].x;
+      float ty = touches[i].y;
+      text("touches["+i+"]: "+tx+", "+ty, 10*text, height-(10*text+12*text*(i+1)));
+
+      //Causes performance issues
+      //fill(255, 0, 0);
+      //stroke(255, 0, 0);
+      //line(tx-5*text, ty-5*text, tx+5*text, ty+5*text);
+      //line(tx+5*text, ty-5*text, tx-5*text, ty+5*text);
+      //stroke(255);
+      //fill(0, 0, 0, 0);
+      //ellipseMode(CENTER);
+      //circle(tx, ty, 120);
     }
     fill(0, 255, 0);
     stroke(0, 255, 0);
@@ -402,12 +432,13 @@ void draw() {
 }
 
 void ButtonTouchCheck() {
-  boolean leftT = Left.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
-  boolean rightT = Right.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
-  boolean upT = Up.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
-  boolean downT = Down.touch();
   float speed = 2;
+  if (!player.grounded) {
+    speed = 1.3;
+  }
   float maxSpeed = 12;
+  boolean touchedLeft = false;
+  boolean touchedRight = false;
   if (touch) {
 
     //for (TouchEvent.Pointer pointer : touches) {
@@ -416,52 +447,66 @@ void ButtonTouchCheck() {
     //boolean upT = Up.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
     if (!editModeOn) {
       for (TouchEvent.Pointer pointer : touches) {
-        if (Left.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
+        if (Left.touch(int(pointer.x), int(pointer.y)) && !touchedLeft) {
+          touchedLeft = true;
           if (player.vx > -maxSpeed) {
             player.vx -= speed;
           }
         }
-        if (Right.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
+        if (Right.touch(int(pointer.x), int(pointer.y))  && !touchedRight) {
+          touchedRight = true;
           if (player.vx < maxSpeed) {
             player.vx += speed;
           }
         }
-        if (Up.touch(PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y))) {
+        if (Up.touch(int(pointer.x), int(pointer.y))) {
           player.jump();
         }
       }
     } else {
+      boolean leftT = Left.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
+      boolean rightT = Right.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
+      boolean upT = Up.touch(); //PApplet.parseInt(pointer.x), PApplet.parseInt(pointer.y)
+      boolean downT = Down.touch();
       player.vx = 0;
       if ((rightT && !leftT) || (!rightT && leftT)) {
         if (leftT) {
-          player.vx = -maxSpeed/1.5f;
+          player.vx = -maxSpeed;
         }
         if (rightT) {
-          player.vx = +maxSpeed/1.5f;
+          player.vx = +maxSpeed;
         }
       }
       player.vy = 0;
       if ((downT && !upT) || (!downT && upT)) {
         if (upT) {
-          player.vy = -maxSpeed/1.5f;
+          player.vy = -maxSpeed;
         }
         if (downT) {
-          player.vy = +maxSpeed/1.5f;
+          player.vy = +maxSpeed;
         }
       }
     }
-    //}
-  } else
+  } else {
     if (editModeOn) {
-      player.vy = 0;
-      player.vx = 0;
+      player.vy = player.vy*0.6;
+      player.vx = player.vx*0.6;
     }
+  }
+  if (abs(player.vx) > maxSpeed) {
+    player.vx = maxSpeed * (player.vx/abs(player.vx));
+  }
+  if (player.grounded) {//((touchedLeft && touchedRight) || (!touchedLeft && !touchedRight)) &&
+    player.vx = player.vx*0.8;
+  }
 }
 
 void touchCheck() {
   if (touches.length == 0) {
     touch = false;
   } else {
+    mouseX = int(touches[0].x);
+    mouseY = int(touches[0].y);
     touch = true;
   }
 }
@@ -642,6 +687,7 @@ void removeFigure(int id, boolean permanent) {
 }
 
 void startLevel(int lvl) {
+  projectiles.clear();
   coinsCollected = 0;
   println("startLevel(): world and worldFigures cleared");
   player.checkpointBlock = new PVector(0, -1);
@@ -742,16 +788,14 @@ void reloadFigures(String fileName) {
       worldFigures.add(createFigure(jsn.getString("class"), jsn.getInt("x"), jsn.getInt("y"), 1, 1, jsn.getInt("id"), jsn.getInt("interval"), jsn.getInt("offset"), jsn.getInt("direction")));
     }
   }
-
-  projectiles.clear();
-  //println("Reloaded Figures of level: "+fileName);
+  println("Reloaded Figures of level: "+fileName);
   //println(level);
 }
 
 void updateIDs() {
- for(int i = 0; i < worldFigures.size(); i++) {
+  for (int i = 0; i < worldFigures.size(); i++) {
     worldFigures.get(i).id = i;
- }
+  }
 }
 
 //android
@@ -770,7 +814,7 @@ void click(boolean touch) {
     //if (touch == false) {
     //println("click(): "+getFigureAt(cam.getInWorldCoord(mouseX, mouseY)).getClass());
     //}
-    if (editModeOn && !Right.touch() && !Left.touch() && !Up.touch() && !(editModeOn && Down.touch()) && !(mouseX+10 > Share.x && mouseY-10 < RotateLeft.y+RotateLeft.heightB) && mouseY<Left.y+Left.heightB && !(mouseX>Left.x && mouseX<Right.x+Right.widthB && mouseY>Left.y && mouseY<Left.y+Left.heightB)) {
+    if (editModeOn && !Right.touch() && !Left.touch() && !Up.touch() && !(editModeOn && Down.touch()) && !(mouseX+10 > RotateLeft.x && mouseY-10 < RotateLeft.y+RotateLeft.heightB) && mouseY<Left.y+Left.heightB && !(mouseX+10>Left.x && mouseX-10<Right.x+Right.widthB && mouseY+10>Left.y && mouseY-10<Left.y+Left.heightB)) {
       if (editMode != "remove") {
         Figure f = getFigureAt(cam.getInWorldCoord(mouseX, mouseY));
         if (f.id == -1) {
@@ -793,78 +837,66 @@ void click(boolean touch) {
         }
       }
     }
-    if (SwitchEdit.touch() &&(mouseButton==LEFT || touch)) {
-      if (editModeOn) {
-        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
-        if (editModeInt < 7) {
-          editModeInt++;
-        } else {
-          editModeInt = 0;
-        }
-        updateEditMode();
-      }
-    }
-    if (SwitchEditNeg.touch() &&(mouseButton==LEFT || touch)) {
-      if (editModeOn) {
-        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
-        if (editModeInt > 0) {
-          editModeInt--;
-        } else {
-          editModeInt = 7;
-        }
-        updateEditMode();
-      }
-    }
-    if (RotateLeft.touch() &&(mouseButton==LEFT || touch)) {
-      if (editModeOn) {
-        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
-        switch(rotateMode) {
-        case 0:
-          rotateMode = 2;
-          break;
-        case 1:
-          rotateMode = 3;
-          break;
-        case 2:
-          rotateMode = 1;
-          break;
-        case 3:
-          rotateMode = 0;
-          break;
+    if (editModeOn) {
+      if (SwitchEdit.touch() &&(mouseButton==LEFT || touch)) {
+        if (editModeOn) {
+          playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+          if (editModeInt < 7) {
+            editModeInt++;
+          } else {
+            editModeInt = 0;
+          }
+          updateEditMode();
         }
       }
-    }
-    if (RotateRight.touch() &&(mouseButton==LEFT || touch)) {
-      if (editModeOn) {
-        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
-        switch(rotateMode) {
-        case 0:
-          rotateMode = 3;
-          break;
-        case 1:
-          rotateMode = 2;
-          break;
-        case 2:
-          rotateMode = 0;
-          break;
-        case 3:
-          rotateMode = 1;
-          break;
+      if (SwitchEditNeg.touch() &&(mouseButton==LEFT || touch)) {
+        if (editModeOn) {
+          playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+          if (editModeInt > 0) {
+            editModeInt--;
+          } else {
+            editModeInt = 7;
+          }
+          updateEditMode();
         }
       }
-    }
-    if (Edit.touch()&&(mouseButton==LEFT || touch)) {
-      playSound(click, 0.7*SoundEffectsSwitch.timer, true);
-      editModeOn = !editModeOn;
-      Edit.pictureChange();
-      player.vx = 0;
-      player.vy = 0;
-      if (editModeOn) {
-        Down.hitbox = true;
-        Up.heightB = Up.heightB/2;
-      } else {
-        Down.hitbox = false;
-        Up.heightB = Up.heightB*2;
+      if (RotateLeft.touch() &&(mouseButton==LEFT || touch)) {
+        if (editModeOn) {
+          playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+          switch(rotateMode) {
+          case 0:
+            rotateMode = 2;
+            break;
+          case 1:
+            rotateMode = 3;
+            break;
+          case 2:
+            rotateMode = 1;
+            break;
+          case 3:
+            rotateMode = 0;
+            break;
+          }
+        }
+      }
+      if (RotateRight.touch() &&(mouseButton==LEFT || touch)) {
+        if (editModeOn) {
+          playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+          switch(rotateMode) {
+          case 0:
+            rotateMode = 3;
+            break;
+          case 1:
+            rotateMode = 2;
+            break;
+          case 2:
+            rotateMode = 0;
+            break;
+          case 3:
+            rotateMode = 1;
+            break;
+          }
+        }
       }
     }
     if (Exit.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
@@ -877,35 +909,52 @@ void click(boolean touch) {
       playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
       particles.removeAll(particles);
       gameFinished = false;
+      loadTimes();
     }
-    if (Share.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
-      if (coolDownTimer <= 0) {
-        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
-        // Save the JSONArray file to the device's internal storage
-        String path = saveJSONArrayInternal(world, "exportlevel"+level+".json");
-
-        // Share the JSONArray file
-        shareFile(path);
-        coolDownTimer=5;
-        userMessage("Share this world with your friends!");
-        userMessage("Export the.JSON-File and send it to them. They can import this file to their worlds.");
+    if (level > levelAmount || debug) {
+      if (Edit.touch()&&(mouseButton==LEFT || touch)) {
+        playSound(click, 0.7*SoundEffectsSwitch.timer, true);
+        editModeOn = !editModeOn;
+        Edit.pictureChange();
+        player.vx = 0;
+        player.vy = 0;
+        if (editModeOn) {
+          Down.hitbox = true;
+          Up.heightB = Up.heightB/2;
+        } else {
+          Down.hitbox = false;
+          Up.heightB = Up.heightB*2;
+        }
       }
-    }
-    if (Import.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
-      if (coolDownTimer <= 0) {
-        userMessage("Import previously exported worlds. The file should be a.json file.");
-        userMessage("If you import them to preinstalled worlds, the change will not be saved.");
-        userMessage("You can import them to empty worlds to permanently save them.");
-        playSound(click, 0.5*SoundEffectsSwitch.timer, true);
-        try {
-          Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-          intent.setType("application/json");
-          ((Activity) this.getActivity()).startActivityForResult(intent, 0);
+      if (Share.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
+        if (coolDownTimer <= 0) {
+          playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+          // Save the JSONArray file to the device's internal storage
+          String path = saveJSONArrayInternal(world, "exportlevel"+level+".json");
+
+          // Share the JSONArray file
+          shareFile(path);
+          coolDownTimer=5;
+          userMessage("Share this world with your friends!");
+          userMessage("Export the.JSON-File and send it to them. They can import this file to their worlds.");
         }
-        catch(Exception e) {
-          println(e);
+      }
+      if (Import.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
+        if (coolDownTimer <= 0) {
+          userMessage("Import previously exported worlds. The file should be a.json file.");
+          userMessage("If you import them to preinstalled worlds, the change will not be saved.");
+          userMessage("You can import them to empty worlds to permanently save them.");
+          playSound(click, 0.5*SoundEffectsSwitch.timer, true);
+          try {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("application/json");
+            ((Activity) this.getActivity()).startActivityForResult(intent, 0);
+          }
+          catch(Exception e) {
+            println(e);
+          }
+          coolDownTimer=5;
         }
-        coolDownTimer=5;
       }
     }
     if (gameFinished) {
@@ -921,15 +970,15 @@ void click(boolean touch) {
         level++;
         LevelX.img = levelXImage(level);
         gameFinished = false;
+        loadTimes();
       }
     }
-  } else {
-    if (Settings.touch()&&(mouseButton==LEFT || touch)) {
-      inSettings = !inSettings;
-      playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
-    }
+  } else { //inGame == false
     if (everythingLoaded) {
-      coinAnimation(mouseX, mouseY);
+      if (Settings.touch()&&(mouseButton==LEFT || touch)) {
+        inSettings = !inSettings;
+        playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
+      }
       if (!inSettings) {
         if (LevelX.touch()&&(mouseButton==LEFT || touch)) {
           if (coolDownTimer <= 0) {
@@ -946,6 +995,7 @@ void click(boolean touch) {
           level++;
           LevelX.img = levelXImage(level);
           playSound(click, 0.7*SoundEffectsSwitch.timer, true);
+          updateTime();
         }
         if (SkipLeft.touch()&&(mouseButton==LEFT || touch)) {
           if (level > 1) {
@@ -954,6 +1004,7 @@ void click(boolean touch) {
             println("click(): Button pressed: SkipLeft: "+level);
           }
           playSound(click, 0.7*SoundEffectsSwitch.timer, true);
+          updateTime();
         }
       } else {
         if (PrivacyPolicy.touch()&&(mouseButton==LEFT || touch)) {
@@ -975,9 +1026,30 @@ void click(boolean touch) {
           debug = !debug;
         }
       }
-    } else {
-      coinAnimation(mouseX, mouseY);
     }
+  }
+}
+
+void updateTime() {
+  try {
+    if (times != null) {
+      time= new JSONObject();
+      time.setInt("level", level);
+      time.setInt("frames", player.getTime(level));
+      if (time.getInt("frames") != -1) {
+        timeFound = true;
+      } else {
+        timeFound = false;
+      }
+    } else {
+      println("Error in updateTime(): times is empty");
+    }
+  }
+  catch(Exception e) {
+    time = null;
+    timeFound = false;
+    println("Error in updateTime()");
+    println(e);
   }
 }
 
@@ -989,28 +1061,34 @@ String saveJSONObjectInternal(JSONObject json, String filename) {
 
 // Shares a file with the given path
 void shareFile(String path) {
-  File file = new File(path);
-  println(file);
-  JSONArray json = loadJSONArray(path);
-  Uri contentUri = FileProvider.getUriForFile(this.getActivity(), "philipp_schroeder.geometryjump", file);
+  try {
+    File file = new File(path);
+    println(file);
+    JSONArray json = loadJSONArray(path);
+    Uri contentUri = FileProvider.getUriForFile(this.getActivity(), "philipp_schroeder.geometryjump", file);
 
-  // Share intent
-  Intent shareIntent = new Intent();
-  shareIntent.setAction(Intent.ACTION_SEND);
-  shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
-  shareIntent.setType("application/json");
+    // Share intent
+    Intent shareIntent = new Intent();
+    shareIntent.setAction(Intent.ACTION_SEND);
+    shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
+    shareIntent.setType("application/json");
 
-  // Save intent
-  //Intent saveIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-  //saveIntent.addCategory(Intent.CATEGORY_OPENABLE);
-  //saveIntent.setType("application/json");
-  //saveIntent.putExtra(Intent.EXTRA_TITLE, file.getName());
+    // Save intent
+    //Intent saveIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+    //saveIntent.addCategory(Intent.CATEGORY_OPENABLE);
+    //saveIntent.setType("application/json");
+    //saveIntent.putExtra(Intent.EXTRA_TITLE, file.getName());
 
-  // Chooser intent
-  Intent chooserIntent = Intent.createChooser(shareIntent, "Share or save JSON");
-  //chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] { saveIntent });
+    // Chooser intent
+    Intent chooserIntent = Intent.createChooser(shareIntent, "Share or save JSON");
+    //chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] { saveIntent });
 
-  startActivity(chooserIntent);
+    startActivity(chooserIntent);
+  }
+  catch(Exception e) {
+    println("Error in shareFile():");
+    println(e);
+  }
 }
 
 // Saves a JSONArray to the device's internal storage and returns the file's path
@@ -1196,6 +1274,19 @@ void loadImages() {
   ButtonRotateLeft = loadImage(folder+"rotateLeft.png");
   loaded = 20;
   println("loadImages(): all images loaded");
+}
+
+void loadTimes() {
+  try {
+    if (time == null) {
+      times = loadJSONArray("times.json");
+    }
+  }
+  catch (Exception e) {
+    println("Error in loadTimes(): times.json not found");
+    println(e);
+  }
+  updateTime();
 }
 
 
