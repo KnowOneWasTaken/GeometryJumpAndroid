@@ -1285,6 +1285,8 @@ void loadTimes() {
   catch (Exception e) {
     println("Error in loadTimes(): times.json not found");
     println(e);
+    times = new JSONArray();
+    saveJSONArray(times, "times.json");
   }
   updateTime();
 }
