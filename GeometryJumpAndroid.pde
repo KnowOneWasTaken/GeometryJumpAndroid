@@ -198,7 +198,6 @@ void setup() {
 
 //called in loop: It is responsible for continuously updating and rendering the graphics and animations of the program.
 void draw() {
-  int millis = millis();
   float widthScale;
   float heightScale;
   if (height > width) {
@@ -210,12 +209,14 @@ void draw() {
   }
   touchCheck();
   background(0);
+
   if (inGame) {
     if (!gameFinished) {
       framesSinceStarted++;
     }
     ButtonTouchCheck();
     cam.update();
+    player.update();
     keyListener();
 
     //Calls show() and showGlow() for every Figure of the worldFigures
@@ -225,25 +226,31 @@ void draw() {
     for (Figure f : worldFigures) {
       f.show();
     }
-    int listSize = projectiles.size();
-    for (int i = 0; i < listSize; i++) {
-      projectiles.get(i).update();
-      if (projectiles.get(i).hit()) {
-        explosionAnimation(projectiles.get(i));
-        projectiles.remove(i);
-        i--;
-        listSize--;
-      } else if (projectiles.get(i).mustRemove()) {
-        projectiles.remove(i);
-        i--;
-        listSize--;
+
+    try {
+      boolean[] removeProjectile = new boolean[projectiles.size()];
+      for (int i = 0; i < projectiles.size(); i++) {
+        projectiles.get(i).update();
+        removeProjectile[i] = false;
+        if (projectiles.get(i).hit()) {
+          explosionAnimation(projectiles.get(i));
+          removeProjectile[i] = true;
+        } else if (projectiles.get(i).mustRemove()) {
+          removeProjectile[i] = true;
+        }
       }
-      if (i == -1 || listSize == 0) {
-        break;
+
+      for (int i = projectiles.size()-1; i>-1; i--) {
+        if (removeProjectile[i]) {
+          projectiles.remove(i);
+        }
       }
     }
+    catch(Exception e) {
+      println("Error in draw: Error in projectiles for-loop");
+      println(e);
+    }
     //updates the player: adds Gravity to speed, moves the player while checking the hitboxes and displaying it when position is calculated
-    player.update();
 
 
     for (int i = 0; i < particles.size(); i++) {
@@ -392,7 +399,6 @@ void draw() {
     textSize(10*text);
     noStroke();
     text("touch: "+touch, 10*text, height-10*text);
-    println(touches.length);
     fill(255);
     textSize(10*text);
     noStroke();
@@ -400,7 +406,7 @@ void draw() {
       float tx = touches[i].x;
       float ty = touches[i].y;
       text("touches["+i+"]: "+tx+", "+ty, 10*text, height-(10*text+12*text*(i+1)));
-      
+
       //Causes performance issues
       //fill(255, 0, 0);
       //stroke(255, 0, 0);
@@ -465,25 +471,26 @@ void ButtonTouchCheck() {
       player.vx = 0;
       if ((rightT && !leftT) || (!rightT && leftT)) {
         if (leftT) {
-          player.vx = -maxSpeed/1.5f;
+          player.vx = -maxSpeed;
         }
         if (rightT) {
-          player.vx = +maxSpeed/1.5f;
+          player.vx = +maxSpeed;
         }
       }
       player.vy = 0;
       if ((downT && !upT) || (!downT && upT)) {
         if (upT) {
-          player.vy = -maxSpeed/1.5f;
+          player.vy = -maxSpeed;
         }
         if (downT) {
-          player.vy = +maxSpeed/1.5f;
+          player.vy = +maxSpeed;
         }
       }
     }
   } else {
     if (editModeOn) {
       player.vy = player.vy*0.6;
+      player.vx = player.vx*0.6;
     }
   }
   if (abs(player.vx) > maxSpeed) {
@@ -680,6 +687,7 @@ void removeFigure(int id, boolean permanent) {
 }
 
 void startLevel(int lvl) {
+  projectiles.clear();
   coinsCollected = 0;
   println("startLevel(): world and worldFigures cleared");
   player.checkpointBlock = new PVector(0, -1);
@@ -780,9 +788,7 @@ void reloadFigures(String fileName) {
       worldFigures.add(createFigure(jsn.getString("class"), jsn.getInt("x"), jsn.getInt("y"), 1, 1, jsn.getInt("id"), jsn.getInt("interval"), jsn.getInt("offset"), jsn.getInt("direction")));
     }
   }
-
-  projectiles.clear();
-  //println("Reloaded Figures of level: "+fileName);
+  println("Reloaded Figures of level: "+fileName);
   //println(level);
 }
 
@@ -1027,16 +1033,12 @@ void click(boolean touch) {
 void updateTime() {
   try {
     if (times != null) {
-      println("times not null");
       time= new JSONObject();
       time.setInt("level", level);
       time.setInt("frames", player.getTime(level));
-      println("data set");
       if (time.getInt("frames") != -1) {
-        println("frames not -1");
         timeFound = true;
       } else {
-        println("frames -1");
         timeFound = false;
       }
     } else {
@@ -1059,28 +1061,34 @@ String saveJSONObjectInternal(JSONObject json, String filename) {
 
 // Shares a file with the given path
 void shareFile(String path) {
-  File file = new File(path);
-  println(file);
-  JSONArray json = loadJSONArray(path);
-  Uri contentUri = FileProvider.getUriForFile(this.getActivity(), "philipp_schroeder.geometryjump", file);
+  try {
+    File file = new File(path);
+    println(file);
+    JSONArray json = loadJSONArray(path);
+    Uri contentUri = FileProvider.getUriForFile(this.getActivity(), "philipp_schroeder.geometryjump", file);
 
-  // Share intent
-  Intent shareIntent = new Intent();
-  shareIntent.setAction(Intent.ACTION_SEND);
-  shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
-  shareIntent.setType("application/json");
+    // Share intent
+    Intent shareIntent = new Intent();
+    shareIntent.setAction(Intent.ACTION_SEND);
+    shareIntent.putExtra(Intent.EXTRA_STREAM, contentUri);
+    shareIntent.setType("application/json");
 
-  // Save intent
-  //Intent saveIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
-  //saveIntent.addCategory(Intent.CATEGORY_OPENABLE);
-  //saveIntent.setType("application/json");
-  //saveIntent.putExtra(Intent.EXTRA_TITLE, file.getName());
+    // Save intent
+    //Intent saveIntent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+    //saveIntent.addCategory(Intent.CATEGORY_OPENABLE);
+    //saveIntent.setType("application/json");
+    //saveIntent.putExtra(Intent.EXTRA_TITLE, file.getName());
 
-  // Chooser intent
-  Intent chooserIntent = Intent.createChooser(shareIntent, "Share or save JSON");
-  //chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] { saveIntent });
+    // Chooser intent
+    Intent chooserIntent = Intent.createChooser(shareIntent, "Share or save JSON");
+    //chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] { saveIntent });
 
-  startActivity(chooserIntent);
+    startActivity(chooserIntent);
+  }
+  catch(Exception e) {
+    println("Error in shareFile():");
+    println(e);
+  }
 }
 
 // Saves a JSONArray to the device's internal storage and returns the file's path
@@ -1273,7 +1281,6 @@ void loadTimes() {
     if (time == null) {
       times = loadJSONArray("times.json");
     }
-    println(times);
   }
   catch (Exception e) {
     println("Error in loadTimes(): times.json not found");

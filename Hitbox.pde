@@ -49,8 +49,6 @@ class Hitbox {
     return false;
   }
 
-
-
   PVector findNearestExit(Hitbox hitbox, float vx, float vy) {
     if (overlap(hitbox)) {
       boolean xMovement = abs(vx) > 0.01; //true

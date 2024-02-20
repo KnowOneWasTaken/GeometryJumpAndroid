@@ -35,12 +35,12 @@ class Player extends Figure {
   void resetToCheckpoint(boolean animation, int px, int py) {
     if (animation) {
       deathAnimation(int(px), int(py));
-      reloadFigures("level"+level);
-      coinsCollected = 0;
+      //reloadFigures("level"+level);
+      //coinsCollected = 0;
     }
     if (getFigureAt(int(checkpointBlock.x*blockSize+blockSize/2), int(checkpointBlock.y*blockSize+blockSize+blockSize/2)).getClass() == ch.getClass()) {
       player.x = checkpointBlock.x*blockSize;
-      player.y = (checkpointBlock.y)*blockSize;
+      player.y = checkpointBlock.y*blockSize;
     } else {
       if (!gameFinished) {
         framesSinceStarted = 0;
@@ -67,15 +67,15 @@ class Player extends Figure {
   }
 
   void move(float dx, float dy) {
-    x = x + dx;
-    y = y + dy;
+    x = x + dx*(blockSize/60f);
+    y = y + dy*(blockSize/60f);
 
     hitbox.updateCoord(int(x), int(y), int(w), int(h));
   }
 
   @Override void show() {
     cam.drawImage(play, int(x), int(y), int(w), int(h));
-
+    stroke(255, 0, 0);
     //displays data on the top left corner
     //if (editModeOn) {
     int text = 4;
@@ -110,12 +110,16 @@ class Player extends Figure {
       }
     }
 
-    for (int i = 0; i < floor(sqrt(sq(vx)+sq(vy))/20f)+1; i++) {
-      move(vx*(blockSize/60f)/(floor(sqrt(sq(vx)+sq(vy))/20f)+1), vy*(blockSize/60f)/(floor(sqrt(sq(vx)+sq(vy))/20f)+1));
-      if (i+1<floor(sqrt(sq(vx)+sq(vy))/20f)+1) {
+    float iterations = floor(sqrt(sq(vx)+sq(vy))/20f)+2f;
+    for (int i = 0; i < iterations; i++) {
+      move(vx*(blockSize/60f)/iterations, vy*(blockSize/60f)/iterations);
+      if (i+1<iterations) {
         hitbox(false);
       }
     }
+    //move(vx/2f, vy/2f);
+    //hitbox(false);
+    //move(vx/2f, vy/2f);
     hitbox(true);
     blockX = int(cam.getInWorldCoordBlock(int(x), int(y)).x);
     blockY = int(cam.getInWorldCoordBlock(int(x), int(y)).y);
@@ -123,14 +127,16 @@ class Player extends Figure {
   }
 
   void hitbox(boolean last) {
+    boolean playerKilled = false;
     grounded = false;
     int delID = -1;
     for (Figure f : nearbyFigures) {
       if (hitbox.overlap(f.hitbox)) {
         if (f.hitbox.solid == false) {
           if (f.getClass() == s.getClass()) { //if player touches spikes
-            if (editModeOn == false) {
+            if (editModeOn == false && !playerKilled) {
               resetToCheckpoint(true, int(f.x+f.w/2f), int(f.y+f.h/2f));
+              playerKilled = true;
             }
           }
           if (f.getClass() == co.getClass()&& editModeOn == false) { //if player touches a coin
@@ -141,7 +147,7 @@ class Player extends Figure {
           if (move.y != 0) {
             if (move.y < 0) {
               grounded = true;
-              if (abs(vx) > 1 && random(0, 10) > 9) {
+              if (abs(vx) > 1 && random(0, 10) > 8) {
                 wallAnimation(int(x+w/2), int(y+h));
               }
             }
@@ -160,26 +166,26 @@ class Player extends Figure {
           }
 
           if (f.getClass() == sl.getClass()) {
-            if (grounded) {
+            if (grounded && last) {
               vy = vy - 50;
               if (coolDownTimer <= 0) {
                 playSound(jumpSlime, 0.5*SoundEffectsSwitch.timer, true);
+                slimeAnimation(int(x+w/2), int(y+h));
                 coolDownTimer = 5;
               }
-              slimeAnimation(int(x+w/2), int(y+h));
-              //println("Player: hitbox(): Slime jump");
             }
-          }
-          if (f.getClass() == ch.getClass() || f.getClass() == go.getClass()) { //if player touces Checkpoint or Goal
-            checkpoint(f);
           }
           if (grounded) { //lets the player walk to the sides when the player is grounded (without reset position)
             move.x = 0;
           }
-          if (move.x != 0) {
-            //println("Player got shifted due to hitbox");
-          }
           move(move.x, move.y);
+        }
+      }
+      for (int i = -1; i < 2; i++) { //checks beneath the player for checkpoint/goal even if it is slightly beneath the player and player.grounded == false
+        if (f.hitbox.pointInHitbox(int((x+w/2)+i*w/3), int(y+h+h/16))) {
+          if (f.getClass() == ch.getClass() || f.getClass() == go.getClass()) { //if player touces Checkpoint or Goal
+            checkpoint(f);
+          }
         }
       }
     }
@@ -192,20 +198,30 @@ class Player extends Figure {
       playSound(collectCoin, 0.7*SoundEffectsSwitch.timer, true);
       println("Player: hitbox(): Coin collected");
     }
-    for (int i = 0; i < projectiles.size(); i++) {
-      if (projectiles.get(i).getClass() == bu.getClass()) {
-        if (hitbox.overlap(projectiles.get(i).hitbox) && !editModeOn) {
-          explosionAnimation(projectiles.get(i));
-          resetToCheckpoint(true, int(projectiles.get(i).x), int(projectiles.get(i).y));
-          projectiles.remove(i);
-          i--;
+    try {
+      int removeProjectileID = -1;
+      for (int i = 0; i < projectiles.size(); i++) {
+        if (projectiles.get(i).getClass() == bu.getClass()) {
+          if (hitbox.overlap(projectiles.get(i).hitbox) && !editModeOn && !playerKilled) {
+            explosionAnimation(projectiles.get(i));
+            resetToCheckpoint(true, int(projectiles.get(i).x), int(projectiles.get(i).y));
+            playerKilled = true;
+            removeProjectileID = i;
+          }
         }
       }
+      if (removeProjectileID != -1) {
+        projectiles.remove(removeProjectileID);
+      }
+    }
+    catch(Exception e) {
+      println("Error in player.hitbox(): Error while testing projectiles for a hit");
+      println(e);
     }
   }
 
   void checkpoint(Figure f) {
-    if (grounded && !editModeOn && !gameFinished) {
+    if (!editModeOn && !gameFinished) {
       if (int(checkpointBlock.x) != int(f.x/blockSize) || int(checkpointBlock.y) != int((f.y/blockSize)-1)) {
         if (f.getClass() == go.getClass()) {
           playSound(goalSound, 0.6*SoundEffectsSwitch.timer);
@@ -243,14 +259,12 @@ class Player extends Figure {
 
   int getTime(int level) {
     if (times != null) {
-      println("Size: "+times.size());
       for (int i = 0; i < times.size(); i++) {
         try {
           if (times.getJSONObject(i).getInt("level") == level) {
             println("player.checkpoint(): Found time: "+ times.getJSONObject(i).getInt("frames"));
             return  times.getJSONObject(i).getInt("frames");
           }
-          println(times.getJSONObject(i));
         }
         catch(Exception e) {
           println("Error in Player.getTime()");

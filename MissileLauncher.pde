@@ -49,11 +49,17 @@ class MissileLauncher extends Wall {
   @Override
     void show() {
     show(wall);
+    textAlign(CENTER);
+    fill(255);
+    textSize(blockSize/2);
+    cam.drawText(str(timer), int(x+w/2),int(y+h/2+blockSize/8));
+    textAlign(LEFT);
     if (timer > 0) {
       timer--;
     } else {
       shoot();
       timer = interval;
     }
+    
   }
 }
