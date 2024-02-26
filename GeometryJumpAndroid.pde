@@ -90,6 +90,7 @@ int backgroundMusicFilesLoaded = 0; //indicates how many of the background-music
 boolean gameFinished = false;
 boolean inSettings = false;
 int coinsInWorld = 0; //Used to show how many coins the player has collected after finishing the game. Indicates how many coins are still in the world.
+int backgroundMusicPlays = -1;
 
 //called once at launch
 void setup() {
@@ -97,6 +98,9 @@ void setup() {
   //size(720, 1600, P2D);
 
   frameRate(50);
+  println("###########################################################################################################");
+  println("Start Program");
+
   loadImages();
   player = new Player(0, -1, blockSize, blockSize);
   loadTimes();
@@ -188,6 +192,15 @@ void setup() {
   setupBGAnimation();
   LevelX.img = levelXImage(level);
 
+  loadData();
+
+  if (editModeOn) {
+    Down.hitbox = true;
+    Up.heightB = Up.heightB/2;
+  } else {
+    Down.hitbox = false;
+    Up.heightB = Up.heightB*2;
+  }
   for (int i = 0; i < backgroundMusicPlayer.length; i++) {
     if (backgroundMusicPlayer[i] != null) {
       backgroundMusicPlayer[i].stop();
@@ -248,7 +261,7 @@ void draw() {
     }
     catch(Exception e) {
       println("Error in draw: Error in projectiles for-loop");
-      println(e);
+      e.printStackTrace();
     }
     //updates the player: adds Gravity to speed, moves the player while checking the hitboxes and displaying it when position is calculated
 
@@ -325,7 +338,7 @@ void draw() {
         }
         catch(Exception e2) {
           println("Error in Draw() while playing background - music: ");
-          println(e2);
+          e2.printStackTrace();
         }
         if (!inSettings) {
           if (timeFound) {
@@ -337,7 +350,7 @@ void draw() {
             }
             catch(Exception e2) {
               println("Error in Draw() while trying to draw time");
-              println(e2);
+              e2.printStackTrace();
             }
           }
 
@@ -429,6 +442,8 @@ void draw() {
   if (coolDownTimer > 0) {
     coolDownTimer--;
   }
+
+  saveData();
 }
 
 void ButtonTouchCheck() {
@@ -535,48 +550,58 @@ void setupBGAnimation() {
 //This function is responsible for displaying the current edit mode on the screen. It uses different images based on the selected edit mode.
 //It is called in draw()
 void showEditMode() {
-  if (editModeOn) {
-    PImage img, imgGlow;
-    switch(editMode) {
-    case "spike":
-      img = spike;
-      imgGlow = spikeGlow;
-      break;
-    case "slime":
-      img = slime;
-      imgGlow = slimeGlow;
-      break;
-    case "remove":
-      img = null;
-      imgGlow = remove;
-      break;
-    case "coin":
-      img = coin;
-      imgGlow = coinGlow;
-      break;
-    case "checkpoint":
-      img = checkpoint;
-      imgGlow = checkpointGlow;
-      break;
-    case "goal":
-      img = checkpoint;
-      imgGlow = goalGlow;
-      break;
-    case "missileLauncher":
-      img = wall;
-      imgGlow = missileLauncherGlow;
-      break;
-    default:
-      img = wall;
-      imgGlow = wallGlow;
-      break;
+  try {
+    if (editModeOn) {
+      if (editMode == null) {
+        println("Error in showEditMode(): editMode is null");
+        editMode = "wall";
+      }
+      PImage img, imgGlow;
+      switch(editMode) {
+      case "spike":
+        img = spike;
+        imgGlow = spikeGlow;
+        break;
+      case "slime":
+        img = slime;
+        imgGlow = slimeGlow;
+        break;
+      case "remove":
+        img = null;
+        imgGlow = remove;
+        break;
+      case "coin":
+        img = coin;
+        imgGlow = coinGlow;
+        break;
+      case "checkpoint":
+        img = checkpoint;
+        imgGlow = checkpointGlow;
+        break;
+      case "goal":
+        img = checkpoint;
+        imgGlow = goalGlow;
+        break;
+      case "missileLauncher":
+        img = wall;
+        imgGlow = missileLauncherGlow;
+        break;
+      default:
+        img = wall;
+        imgGlow = wallGlow;
+        break;
+      }
+      if (img != null) {
+        image(img, blockSize*1.5, blockSize*1.5, blockSize*1.5, blockSize*1.5);
+      }
+      if (imgGlow != null) {
+        image(imgGlow, blockSize*1.5-blockSize*1.5/2, blockSize*1.5-blockSize*1.5/2, blockSize*2*1.5, blockSize*2*1.5);
+      }
     }
-    if (img != null) {
-      image(img, blockSize*1.5, blockSize*1.5, blockSize*1.5, blockSize*1.5);
-    }
-    if (imgGlow != null) {
-      image(imgGlow, blockSize*1.5-blockSize*1.5/2, blockSize*1.5-blockSize*1.5/2, blockSize*2*1.5, blockSize*2*1.5);
-    }
+  }
+  catch(Exception e) {
+    println("Error in showEditMode():");
+    e.printStackTrace();
   }
 }
 
@@ -653,7 +678,7 @@ void addFigure(String ObjectClass, int x, int y, int w, int h, int extra1, int e
       }
       catch(Exception e2) {
         println("Couldn't save world after delay loading time");
-        println(e2);
+        e2.printStackTrace();
       }
     }
   }
@@ -708,7 +733,7 @@ void startLevel(int lvl) {
     }
     catch(Exception e2) {
       println("startLevel(): Error while reloading Figures");
-      println(e2);
+      e2.printStackTrace();
       world = new JSONArray();
       addFigure("wall", 0, 0, 1, 1);
       saveJSONArray(world, "level"+lvl+".json");
@@ -716,7 +741,7 @@ void startLevel(int lvl) {
   }
   catch(Exception e) { //if the file couldn't be loaded: adds one block beneath the player
     println("startLevel(): No world map found");
-    println(e);
+    e.printStackTrace();
     world = new JSONArray();
     addFigure("wall", 0, 0, 1, 1);
     saveJSONArray(world, "level"+lvl+".json");
@@ -741,7 +766,7 @@ void reloadFigures(String fileName) {
     }
     catch(Exception e2) {
       println("Error in reloadFigures(): could'nt save temp into world.json");
-      println(e2);
+      e2.printStackTrace();
       println("After a delay, it will try again");
       delay(500);
       try {
@@ -749,7 +774,7 @@ void reloadFigures(String fileName) {
       }
       catch(Exception e3) {
         println("Error in reloadFigures(): could'nt save temp into world.json after delay");
-        println(e3);
+        e3.printStackTrace();
       }
     }
     println("reloadFigures(): updated IDs into world and world.json");
@@ -767,14 +792,14 @@ void reloadFigures(String fileName) {
     }
     catch(Exception e2) {
       println("Error in reloadFigures() while saving world into world.json");
-      println(e2);
+      e2.printStackTrace();
       delay(500);
       try {
         saveJSONArray(world, "world.json");
       }
       catch(Exception e3) {
         println("Couldn't save world after delay loading time");
-        println(e3);
+        e3.printStackTrace();
       }
     }
   }
@@ -821,6 +846,7 @@ void click(boolean touch) {
           if (editMode != "missileLauncher") {
             addFigure(editMode, int(cam.getInWorldCoordBlock(mouseX, mouseY).x), int(cam.getInWorldCoordBlock(mouseX, mouseY).y), 1, 1);
           } else {
+            println("Add Missilelauncher with rotation "+rotateMode);
             addFigure(editMode, int(cam.getInWorldCoordBlock(mouseX, mouseY).x), int(cam.getInWorldCoordBlock(mouseX, mouseY).y), 1, 1, 100, rotateMode);
           }
           playSound(click, 0.5*SoundEffectsSwitch.timer, true);
@@ -918,6 +944,18 @@ void click(boolean touch) {
         Edit.pictureChange();
         player.vx = 0;
         player.vy = 0;
+        if (height > width) {
+          float widthScale = width/1080f;
+          float  heightScale = height/2400f;
+
+          Up = new Button(true, ButtonUP, clear, false, int(width/2f - (400/2) * width / 1080f), int(height-(10+450) * heightScale), int(400*widthScale), int(450*heightScale), 1, false, true);
+          Down = new Button(true, ButtonDown, clear, false, int(width/2f - (400/2) * widthScale), int(height-((10+450) - (450/2)) * heightScale), int(400*widthScale), int(225*heightScale), 1, false, true);
+        } else {
+          float widthScale = width/2400f;
+          float heightScale = height/1080f;
+          Up = new Button(true, ButtonUP, clear, false, int(width-(240+320)*widthScale), int(height-(90+320)*heightScale), int(320*widthScale), int(320*heightScale), 1, false, true);
+          Down = new Button(true, ButtonDown, clear, false, int(width-(240+320)*widthScale), int(height-(90+160)*heightScale), int(320*widthScale), int(160*heightScale), 1, false, true);
+        }
         if (editModeOn) {
           Down.hitbox = true;
           Up.heightB = Up.heightB/2;
@@ -951,7 +989,7 @@ void click(boolean touch) {
             ((Activity) this.getActivity()).startActivityForResult(intent, 0);
           }
           catch(Exception e) {
-            println(e);
+            e.printStackTrace();
           }
           coolDownTimer=5;
         }
@@ -1049,7 +1087,7 @@ void updateTime() {
     time = null;
     timeFound = false;
     println("Error in updateTime()");
-    println(e);
+    e.printStackTrace();
   }
 }
 
@@ -1087,7 +1125,7 @@ void shareFile(String path) {
   }
   catch(Exception e) {
     println("Error in shareFile():");
-    println(e);
+    e.printStackTrace();
   }
 }
 
@@ -1284,7 +1322,7 @@ void loadTimes() {
   }
   catch (Exception e) {
     println("Error in loadTimes(): times.json not found");
-    println(e);
+    e.printStackTrace();
     times = new JSONArray();
     saveJSONArray(times, "times.json");
   }
@@ -1361,7 +1399,7 @@ void playSound(MediaPlayer sound, float amp) {
 void playSound(MediaPlayer sound, float amp, boolean multiple) {
   if (sound != null && amp > 0.0001) {
     if (sound.isPlaying() == false || multiple) {
-      if (sound.isPlaying()) {
+      if (multiple) {
         MediaPlayer sound2 = new MediaPlayer();
         sound2 = sound;
         sound2.seekTo(0);
@@ -1378,9 +1416,16 @@ void playSound(MediaPlayer sound, float amp, boolean multiple) {
 }
 
 void playBackgroundMusic() {
-  setVolumeMusic();
-  if (!isMusicPlaying()) {
-    playSound(int(random(0, backgroundMusicFilesLoaded)));
+  if (everythingLoaded) {
+    if (backgroundMusicPlays == -1 || !backgroundMusicPlayer[backgroundMusicPlays].isPlaying()) {
+      backgroundMusicPlays = int(random(0, backgroundMusicFilesLoaded));
+    }
+    if (!backgroundMusicPlayer[backgroundMusicPlays].isPlaying()) {
+      playSound(backgroundMusicPlayer[backgroundMusicPlays], 0.3, false);
+    }
+    if (backgroundMusicAmp == 0 && backgroundMusicPlayer[backgroundMusicPlays].isPlaying()) {
+      stopSound(backgroundMusicPlays);
+    }
   }
 }
 
@@ -1581,7 +1626,7 @@ void onActivityResult(int requestCode, int resultCode, Intent data) {
           }
           catch(Exception e2) {
             println("Couldn't save world after delay loading time");
-            println(e2);
+            e2.printStackTrace();
           }
         }
         reloadFigures("world");
@@ -1618,18 +1663,24 @@ void importFile() {
 }
 
 void userMessage(String s) {
-  runOnUiThread(new Runnable() {
-    public void run() {
-      try {
-        Toast.makeText(getContext(), s, Toast.LENGTH_LONG).show();
-      }
-      catch(Exception e) {
-        println("Error in userMessage(): Couldn't get context by getContext():");
-        println(e);
+  try {
+    runOnUiThread(new Runnable() {
+      public void run() {
+        try {
+          Toast.makeText(getContext(), s, Toast.LENGTH_LONG).show();
+        }
+        catch(Exception e) {
+          println("Error in userMessage(): Couldn't get context by getContext():");
+          e.printStackTrace();
+        }
       }
     }
+    );
   }
-  );
+  catch(Exception e2) {
+    println("Error in userMessage():");
+    e2.printStackTrace();
+  }
 }
 
 Context getContext() {
@@ -1655,7 +1706,119 @@ void openWebsiteInBrowser(String url) {
     }
     catch(Exception e2) {
       println("Error in openWebsiteInBrowser(): Couldn't get context by getContext():");
-      println(e2);
+      e2.printStackTrace();
     }
+  }
+}
+
+void loadData() {
+  try {
+    player = new Player(0, -1, blockSize, blockSize);
+    JSONObject data = loadJSONObject(sketchPath("data.json"));
+    level = getIntJSON(data, "level");
+    rotateMode = getIntJSON(data, "rotateMode");
+    println("Loaded: "+rotateMode);
+    editModeInt = getIntJSON(data, "editModeInt");
+    editMode = getStringJSON(data, "editMode");
+    coinsCollected = getIntJSON(data, "coinsCollected");
+    inGame = getBooleanJSON(data, "inGame");
+    framesSinceStarted = data.getInt("framesSinceStarted");
+    player.x = getFloatJSON(data, "player.x");
+    player.y = getFloatJSON(data, "player.y");
+    player.vx = getFloatJSON(data, "player.vx");
+    player.vy = getFloatJSON(data, "player.vy");
+    player.grounded = getBooleanJSON(data, "player.grounded");
+    gameFinished = getBooleanJSON(data, "gameFinished");
+    player.checkpointBlock = new PVector(getIntJSON(data, "player.checkpointBlock.x"), getIntJSON(data, "player.checkpointBlock.y"));
+    backgroundMusicPlays = getIntJSON(data, "backgroundMusicPlays");
+    editModeOn = getBooleanJSON(data, "editModeOn");
+    println("loadData(): Loaded data.json");
+    if (inGame) {
+      reloadFigures("world");
+    }
+    LevelX.img = levelXImage(level);
+    updateTime();
+    println("loadData(): Data successfully loaded");
+  }
+  catch(Exception e) {
+    println("Error in loadData():");
+    e.printStackTrace();
+  }
+}
+
+int getIntJSON(JSONObject data, String type) {
+  try {
+    return data.getInt(type);
+  }
+  catch(Exception e) {
+    println("Error in getIntJSON(): type: "+type);
+    e.printStackTrace();
+  }
+  return -1;
+}
+
+float getFloatJSON(JSONObject data, String type) {
+  try {
+    return data.getFloat(type);
+  }
+  catch(Exception e) {
+    println("Error in getIntJSON(): type: "+type);
+    e.printStackTrace();
+  }
+  return -1;
+}
+
+boolean getBooleanJSON(JSONObject data, String type) {
+  try {
+    return data.getBoolean(type);
+  }
+  catch(Exception e) {
+    println("Error in getIntJSON(): type: "+type);
+    e.printStackTrace();
+  }
+  return false;
+}
+
+String getStringJSON(JSONObject data, String type) {
+  try {
+    return data.getString(type);
+  }
+  catch(Exception e) {
+    println("Error in getIntJSON(): type: "+type);
+    e.printStackTrace();
+  }
+  return "wall";
+}
+
+void saveData() {
+  try {
+    JSONObject data = new JSONObject();
+    data.setInt("level", level);
+    data.setInt("rotateMode", rotateMode);
+    data.setInt("editModeInt", editModeInt);
+    data.setString("editMode", editMode);
+    data.setInt("coinsCollected", coinsCollected);
+    data.setBoolean("inGame", inGame);
+    data.setInt("framesSinceStarted", framesSinceStarted);
+    data.setInt("coinsInWorld", coinsInWorld);
+    data.setFloat("player.x", player.x);
+    data.setFloat("player.y", player.y);
+    data.setFloat("player.vx", player.vx);
+    data.setFloat("player.vy", player.vy);
+    data.setBoolean("player.grounded", player.grounded);
+    data.setFloat("player.checkpointBlock.x", player.checkpointBlock.x);
+    data.setFloat("player.checkpointBlock.y", player.checkpointBlock.y);
+    data.setBoolean("gameFinished", gameFinished);
+    data.setInt("backgroundMusicPlays", backgroundMusicPlays);
+    data.setBoolean("editModeOn", editModeOn);
+    saveJSONObject(data, sketchPath("data.json"));
+
+    if (world != null) {
+      saveJSONArray(world, "world.json");
+    }
+  }
+  catch(Exception e) {
+    println("Error in saveData():");
+    e.printStackTrace();
   }
 }

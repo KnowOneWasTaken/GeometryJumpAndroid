@@ -23,7 +23,7 @@ class Figure {
     this.id = -1;
     this.vx = 0;
     this.vy = 0;
-    hitbox = new Hitbox(x, y, w, h);
+    this.hitbox = new Hitbox(x, y, w, h);
   }
 
   //creates empty Figure with id = -1 and unsolid hitbox

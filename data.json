@@ -1,0 +1,20 @@
+{
+    "level": 1,
+    "rotateMode": 0,
+    "editModeInt": 1,
+    "editMode": "wall",
+    "coinsCollected": 0,
+    "inGame": false,
+    "framesSinceStarted": 0,
+    "coinsInWorld": 0,
+    "player.x": 0,
+    "player.y": 0,
+    "player.vx": 0,
+    "player.vy": 0,
+    "player.grounded": false,
+    "player.checkpointBlock.x": 0,
+    "player.checkpointBlock.y": -1,
+    "gameFinished": false,
+    "backgroundMusicPlays": -1,
+    "editModeOn": false
+}

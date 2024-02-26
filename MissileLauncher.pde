@@ -43,6 +43,9 @@ class MissileLauncher extends Wall {
       projectiles.add(new Bullet(int(x+(w-bulletHeight)/2), int(y)+h-bulletLength, bulletHeight, bulletLength, 0, bulletSpeed, projectiles.size(), Bullet4));
     } else {
       println("MissileLauncher: id: "+id+"; Wrong direction: "+direction);
+      direction = 0;
+      interval = 100;
+      timer = 0;
     }
   }
 

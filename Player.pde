@@ -13,8 +13,8 @@ class Player extends Figure {
     this.y = y*blockSize;
     this.w = w;
     this.h = h;
-    grounded = false;
-    checkpointBlock = new PVector(0, -1);
+    this.checkpointBlock = new PVector(0, -1);
+    this.grounded = false;
     //this.stepsX = 0;
     //this.stepsY = 0;
   }
@@ -216,7 +216,7 @@ class Player extends Figure {
     }
     catch(Exception e) {
       println("Error in player.hitbox(): Error while testing projectiles for a hit");
-      println(e);
+      e.printStackTrace();
     }
   }
 
@@ -268,7 +268,7 @@ class Player extends Figure {
         }
         catch(Exception e) {
           println("Error in Player.getTime()");
-          println(e);
+          e.printStackTrace();
         }
       }
     } else {
@@ -292,7 +292,7 @@ class Player extends Figure {
     }
     if (!saved) {
       times.setJSONObject(times.size(), o);
-      println("player.setTime(): level: Saved in array at position "+times.size()+"; no entry dound and created a new entry");
+      println("player.setTime(): level: Saved in array at position "+times.size()+"; no entry found and created a new entry");
     }
   }
 }
