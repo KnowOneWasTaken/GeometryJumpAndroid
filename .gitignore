@@ -13,3 +13,7 @@ data/editon.pdn
 data/edit.pdn
 *.pdn
 *.pdn
+.idea/vcs.xml
+.idea/modules.xml
+.idea/misc.xml
+.idea/GeometryJumpAndroid.iml

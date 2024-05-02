@@ -57,7 +57,7 @@ class Player extends Figure {
 
   void jump() {
     if (grounded) {
-      if (getFigureAt(int(x+w/15f), int(y-blockSize/2)).hitbox.solid == false && getFigureAt(int(x+w-w/15f), int(y-blockSize/2)).hitbox.solid == false) {
+      if (getFigureAt(int(x+w/10f), int(y-h/5f)).hitbox.solid == false && getFigureAt(int(x+w-w/10f), int(y-h/5f)).hitbox.solid == false) {
         if (vy > -16) { //should prevent double jump
           vy = vy - 18;
         }
@@ -157,7 +157,7 @@ class Player extends Figure {
               vx = 0;
             }
           }
-          if (move.x != 0) { //I don't understand what that does??
+          if (move.x != 0) {
             vx = 0;
             vy = vy*0.95;
             if (abs(vy) < 0.00001) {

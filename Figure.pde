@@ -65,4 +65,17 @@ class Figure {
 
   void showGlow() {
   }
+
+  PImage rotateImage(PImage img, int degree) {
+    PGraphics pg = createGraphics(img.width*2, img.height*2);
+    pg.pushMatrix();
+    pg.beginDraw();
+    pg.translate(pg.width/2, pg.height/2);
+    pg.rotate(degree*TWO_PI/360f);
+    pg.imageMode(CENTER);
+    pg.image(img, 0, 0);
+    pg.endDraw();
+    pg.popMatrix();
+    return pg;
+  }
 }

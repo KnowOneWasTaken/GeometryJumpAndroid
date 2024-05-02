@@ -32,9 +32,9 @@ MediaPlayer click, reset, jump, jumpSlime, collectCoin, goalSound, tabChange, lo
 MediaPlayer[] backgroundMusicPlayer;
 
 //These are variable declarations used throughout the program. They include objects such as figures, images, player, camera, and various flags and settings.
-PImage spike, wall, play, spikeGlow, slime, slimeGlow, wallGlow, remove, coin, coinGlow, checkpoint, checkpointGlow, BEditModeOn, BEditModeOff, BLevel1Glow, right, rightGlow, left, leftGlow, BLevelX, goalGlow, particleStar,
+PImage spike, wall, play, spikeGlow, slime, slimeGlow, wallGlow, remove, coin, coinGlow, checkpoint, checkpointGlow, BEditModeOn, BEditModeOff, BLevel1Glow, right, rightGlow, left, leftGlow, goalGlow, particleStar,
   particleWall, ButtonLEFT, ButtonRIGHT, ButtonUP, clear, ButtonEXIT, particleSlime, particleCheckpoint, bgSwitch, offSwitch, onSwitch, ButtonSwitch, ButtonShare, ButtonImport, ButtonDown, ButtonSettings, ButtonPrivacyPolicy,
-  ButtonMusic, Logo, goalAnimationBackground, ButtonOK, emptyCoin, Bullet1, Bullet2, Bullet3, Bullet4, missileLauncherGlow, particleBullet, ButtonSwitchNeg, ButtonRotateRight, ButtonRotateLeft;
+  ButtonMusic, Logo, goalAnimationBackground, ButtonOK, emptyCoin, Bullet1, Bullet2, Bullet3, Bullet4, missileLauncherGlow, particleBullet, ButtonSwitchNeg, ButtonRotateRight, ButtonRotateLeft, missileLauncher, goal, vorlage;
 
 Button Edit, SkipRight, SkipLeft, LevelX, Left, Right, Up, Exit, SwitchEdit, SwitchEditNeg, Share, Import, Down, Settings, PrivacyPolicy, Music, OK, RotateRight, RotateLeft;
 SwitchButton BgMusicSwitch, SoundEffectsSwitch, DebugSwitch;
@@ -65,6 +65,7 @@ float gameZoom = 1.8; //makes the gameplay bigger (zooms in), when you are on a 
 boolean useTouchScreen = false;
 int coolDownTimer = 0;
 String selectedFilePath;
+String resource_pack = "default";
 
 //objects just to get their .getClass()
 Spike s;
@@ -91,6 +92,8 @@ boolean gameFinished = false;
 boolean inSettings = false;
 int coinsInWorld = 0; //Used to show how many coins the player has collected after finishing the game. Indicates how many coins are still in the world.
 int backgroundMusicPlays = -1;
+int playerSize = int(blockSize);
+int coins = 0;
 
 //called once at launch
 void setup() {
@@ -102,7 +105,7 @@ void setup() {
   println("Start Program");
 
   loadImages();
-  player = new Player(0, -1, blockSize, blockSize);
+  player = new Player(0, -1, playerSize, playerSize);
   loadTimes();
   thread("loadSounds");
 
@@ -124,7 +127,7 @@ void setup() {
     heightScale = height/2400f;
     SkipRight = new Button(true, right, rightGlow, false, int(width/2+(640/2+20)*widthScale), int(height/2-(350/2)*heightScale), int(160*widthScale), int(350*heightScale), 1, false, true);
     SkipLeft = new Button(true, left, leftGlow, false, int(width/2-(160+640/2+20)*widthScale), int(height/2-(350/2)*heightScale), int(160*widthScale), int(350*heightScale), 1, false, true);
-    LevelX = new Button(true, BLevelX, BLevel1Glow, false, int(width/2-(640/2)*widthScale), int(height/2-(440/2)*heightScale), int((640)*widthScale), int(440*heightScale), 1, false, true);
+    LevelX = new Button(true, vorlage, BLevel1Glow, false, int(width/2-(640/2)*widthScale), int(height/2-(440/2)*heightScale), int((640)*widthScale), int(440*heightScale), 1, false, true);
 
     Left = new Button(true, ButtonLEFT, clear, false, int(width/2f - (400/2 + 300) * widthScale), int(height-(10+450) * heightScale), int(300*widthScale), int(450*heightScale), 1, false, true);
     Right = new Button(true, ButtonRIGHT, clear, false, int(width/2f + (400/2) * widthScale), int(height-(10+450) * heightScale), int(300*widthScale), int(450*heightScale), 1, false, true);
@@ -153,7 +156,7 @@ void setup() {
   } else {
     widthScale = width/2400f;
     heightScale = height/1080f;
-    LevelX = new Button(true, BLevelX, BLevel1Glow, false, int(width/2-320*widthScale), int(height/2-220*heightScale), int(640*widthScale), int(440*heightScale), 1, false, true);
+    LevelX = new Button(true, vorlage, BLevel1Glow, false, int(width/2-320*widthScale), int(height/2-220*heightScale), int(640*widthScale), int(440*heightScale), 1, false, true);
     SkipRight = new Button(true, right, rightGlow, false, int(width/2+(320+50)*widthScale), int(height/2-150*heightScale), int(150*widthScale), int(300*heightScale), 1, false, true);
     SkipLeft = new Button(true, left, leftGlow, false, int(width/2+(-320-50-150)*widthScale), int(height/2-150*heightScale), int(150*widthScale), int(300*heightScale), 1, false, true);
 
@@ -197,9 +200,10 @@ void setup() {
   if (editModeOn) {
     Down.hitbox = true;
     Up.heightB = Up.heightB/2;
+    Edit.picture = 2;
   } else {
     Down.hitbox = false;
-    Up.heightB = Up.heightB*2;
+    Edit.picture = 1;
   }
   for (int i = 0; i < backgroundMusicPlayer.length; i++) {
     if (backgroundMusicPlayer[i] != null) {
@@ -454,6 +458,7 @@ void ButtonTouchCheck() {
   float maxSpeed = 12;
   boolean touchedLeft = false;
   boolean touchedRight = false;
+  float walkSpeedMultiplier = 2.2;
   if (touch) {
 
     //for (TouchEvent.Pointer pointer : touches) {
@@ -466,12 +471,18 @@ void ButtonTouchCheck() {
           touchedLeft = true;
           if (player.vx > -maxSpeed) {
             player.vx -= speed;
+            if (player.grounded) {
+              player.vx -= speed*(walkSpeedMultiplier-1);
+            }
           }
         }
         if (Right.touch(int(pointer.x), int(pointer.y))  && !touchedRight) {
           touchedRight = true;
           if (player.vx < maxSpeed) {
             player.vx += speed;
+            if (player.grounded) {
+              player.vx += speed*(walkSpeedMultiplier-1);
+            }
           }
         }
         if (Up.touch(int(pointer.x), int(pointer.y))) {
@@ -512,7 +523,7 @@ void ButtonTouchCheck() {
     player.vx = maxSpeed * (player.vx/abs(player.vx));
   }
   if (player.grounded) {//((touchedLeft && touchedRight) || (!touchedLeft && !touchedRight)) &&
-    player.vx = player.vx*0.8;
+    player.vx = player.vx*0.6;
   }
 }
 
@@ -583,7 +594,7 @@ void showEditMode() {
         imgGlow = goalGlow;
         break;
       case "missileLauncher":
-        img = wall;
+        img = missileLauncher;
         imgGlow = missileLauncherGlow;
         break;
       default:
@@ -961,7 +972,6 @@ void click(boolean touch) {
           Up.heightB = Up.heightB/2;
         } else {
           Down.hitbox = false;
-          Up.heightB = Up.heightB*2;
         }
       }
       if (Share.touch()&&(mouseButton==LEFT || touch || useTouchScreen)) {
@@ -1026,6 +1036,9 @@ void click(boolean touch) {
             particles.removeAll(particles);
             startLevel(level);
             playSound(tabChange, 0.7*SoundEffectsSwitch.timer, true);
+            if (level <= levelAmount) {
+              editModeOn = false;
+            }
           }
         }
         if (SkipRight.touch()&&(mouseButton==LEFT || touch)) {
@@ -1255,7 +1268,7 @@ void updateEditMode() {
 
 //This function loads the necessary images used in the program.
 void loadImages() {
-  String folder = "images/";
+  String folder = "images/resource packs/"+resource_pack+"/";
   spike = loadImage(folder+"spike.png");
   wall = loadImage(folder+"wall.png");
   play = loadImage(folder+"player.png");
@@ -1270,7 +1283,6 @@ void loadImages() {
   checkpoint = loadImage(folder+"checkpoint.png");
   BEditModeOff = loadImage(folder+"BEditModeOff.png");
   BEditModeOn = loadImage(folder+"BEditModeOn.png");
-  BLevelX = loadImage(folder+"BLevelX.png");
   BLevel1Glow = loadImage(folder+"BLevel1Glow.png");
   loaded = 10;
   right = loadImage(folder+"right.png");
@@ -1310,6 +1322,9 @@ void loadImages() {
   ButtonSwitchNeg = loadImage(folder+"switchNeg.png");
   ButtonRotateRight = loadImage(folder+"rotateRight.png");
   ButtonRotateLeft = loadImage(folder+"rotateLeft.png");
+  missileLauncher = loadImage(folder+"missileLauncher.png");
+  vorlage = loadImage(folder+"vorlage.png");
+  goal = loadImage(folder+"goal.png");
   loaded = 20;
   println("loadImages(): all images loaded");
 }
@@ -1544,7 +1559,7 @@ void bulletAnimation(int x, int y, int minVX, int maxVX, int minVY, int maxVY) {
 }
 
 void explosionAnimation(Figure f) {
-  particleAnimation(int(f.x), int(f.y), particleBullet, 30, 60, int(f.vx)+8, int(f.vx)-8, int(f.vy)+8, int(f.vy)-8);
+  particleAnimation(int(f.x), int(f.y), particleBullet, 30, 20, int(f.vx)+8, int(f.vx)-8, int(f.vy)+8, int(f.vy)-8);
   playSound(explosion, (blockSize*blockSize*7f/sq(dist(player.x+player.w/2f, player.y+player.h/2f, f.x+f.w/2f, f.y+f.h/2f)))*SoundEffectsSwitch.timer, true);
   //particleAnimation(x, y, particleBullet, 8, 60);
 }
@@ -1573,10 +1588,9 @@ void wallAnimation(int x, int y) {
 }
 
 PImage levelXImage(int printLevel) {
-  PImage vorlage = loadImage("images/"+"vorlage.png");
   PGraphics pg= createGraphics(640, 440);
   pg.beginDraw();
-  pg.image(vorlage, 0, 0);
+  pg.image(vorlage, 0, 0, pg.width, pg.height);
   pg.fill(255);
   if (printLevel < 10) {
     pg.textSize(180);
@@ -1713,7 +1727,7 @@ void openWebsiteInBrowser(String url) {
 
 void loadData() {
   try {
-    player = new Player(0, -1, blockSize, blockSize);
+    player = new Player(0, -1, playerSize, playerSize);
     JSONObject data = loadJSONObject(sketchPath("data.json"));
     level = getIntJSON(data, "level");
     rotateMode = getIntJSON(data, "rotateMode");
@@ -1732,6 +1746,7 @@ void loadData() {
     player.checkpointBlock = new PVector(getIntJSON(data, "player.checkpointBlock.x"), getIntJSON(data, "player.checkpointBlock.y"));
     backgroundMusicPlays = getIntJSON(data, "backgroundMusicPlays");
     editModeOn = getBooleanJSON(data, "editModeOn");
+    coins = getIntJSON(data, "coins");
     println("loadData(): Loaded data.json");
     if (inGame) {
       reloadFigures("world");
@@ -1811,6 +1826,7 @@ void saveData() {
     data.setBoolean("gameFinished", gameFinished);
     data.setInt("backgroundMusicPlays", backgroundMusicPlays);
     data.setBoolean("editModeOn", editModeOn);
+    data.setInt("coins", coins);
     saveJSONObject(data, sketchPath("data.json"));
 
     if (world != null) {
