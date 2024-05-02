@@ -16,5 +16,6 @@
     "player.checkpointBlock.y": -1,
     "gameFinished": false,
     "backgroundMusicPlays": -1,
-    "editModeOn": false
+    "editModeOn": false,
+    "coins": 0
 }

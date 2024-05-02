@@ -191,9 +191,12 @@ class Player extends Figure {
     }
     if (delID!= -1 && editModeOn == false && last) { //removes a Coin when you are not in editMode
       coinAnimation(int(worldFigures.get(delID).x+worldFigures.get(delID).w/2), int(worldFigures.get(delID).y+worldFigures.get(delID).h));
-      removeFigure(delID, false);
+      removeCoin(delID);
       if (!gameFinished) {
         coinsCollected++;
+        if (level <= levelAmount) {
+          coins++;
+        }
       }
       playSound(collectCoin, 0.7*SoundEffectsSwitch.timer, true);
       println("Player: hitbox(): Coin collected");

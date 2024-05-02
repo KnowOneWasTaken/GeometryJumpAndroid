@@ -7,7 +7,7 @@ import processing.core.PVector;
 import processing.data.JSONArray;
 import processing.data.JSONObject;
 import processing.event.TouchEvent;
-import processing.sound.SoundFile;
+//import processing.sound.SoundFile;
 
 import android.app.Activity;
 import android.content.Context;
@@ -207,7 +207,7 @@ void setup() {
   }
   for (int i = 0; i < backgroundMusicPlayer.length; i++) {
     if (backgroundMusicPlayer[i] != null) {
-      backgroundMusicPlayer[i].stop();
+      stopSound(i);
       backgroundMusicPlayer[i].setVolume(0, 0);
     }
   }
@@ -226,6 +226,15 @@ void draw() {
   }
   touchCheck();
   background(0);
+  if (everythingLoaded) {
+    try {
+      playBackgroundMusic();
+    }
+    catch(Exception e2) {
+      println("Error in Draw() while playing background - music: ");
+      e2.printStackTrace();
+    }
+  }
 
   if (inGame) {
     if (!gameFinished) {
@@ -234,7 +243,6 @@ void draw() {
     ButtonTouchCheck();
     cam.update();
     player.update();
-    keyListener();
 
     //Calls show() and showGlow() for every Figure of the worldFigures
     for (Figure f : worldFigures) {
@@ -285,7 +293,6 @@ void draw() {
 
 
     //plays the backgroundMusic[] sounds when they are loaded
-    playBackgroundMusic();
     Left.show();
     Right.show();
     Up.show();
@@ -337,13 +344,6 @@ void draw() {
     backgroundAnimation();
     if (everythingLoaded) {
       try {
-        try {
-          playBackgroundMusic();
-        }
-        catch(Exception e2) {
-          println("Error in Draw() while playing background - music: ");
-          e2.printStackTrace();
-        }
         if (!inSettings) {
           if (timeFound) {
             try {
@@ -367,6 +367,14 @@ void draw() {
           SkipRight.show();
           SkipLeft.show();
           Settings.show();
+
+          //shows coins
+          fill(293, 185, 69);
+          textSize(30*heightScale*2);
+          text(coins, width - 5*30*heightScale, 2*2*30*heightScale);
+          image(coin, width - 5*30*heightScale-3*30*heightScale, 2.2*30*heightScale, 2.5*30*heightScale, 2.5*30*heightScale);
+
+          //shows a user message if the user has an empty level selected
           if (level > levelAmount) {
             fill(255);
             textSize(55*heightScale);
@@ -374,7 +382,7 @@ void draw() {
             if (height > width) {
               text("Build your own level!\nHere you can be creative,\nbuild worlds and share\nthem with your friends!\nYou can also import existing\nlevels from the community", width/2f-textWidth("Build your own level!")/2, height-450*heightScale);
             } else {
-              text("Build your own level! Here you can be creative, build worlds and share\nthem with your friends! You can also import existing levels from the community", width/2f-textWidth("Build your own level!")/2, height-220*heightScale);
+              text("Build your own level! Here you can be creative, build worlds and share\nthem with your friends! You can also import existing levels from the community", width/4f-textWidth("Build your own level!")/2, height-220*heightScale);
             }
           }
         } else {//inSettings
@@ -707,9 +715,9 @@ void removeFigure(int id, boolean permanent) {
   try {
     world.remove(id);
     worldFigures.remove(id);
+    updateIDs();
     saveJSONArray(world, "world.json");
     //reloadFigures("world");
-    updateIDs();
     if (level > levelAmount && permanent) {
       saveJSONArray(world, "level"+level+".json");
     }
@@ -717,6 +725,31 @@ void removeFigure(int id, boolean permanent) {
   catch(Exception e) {
     println("removeFigure(): Error while removing a Figure: id: "+id+", worldFigures.size():"+worldFigures.size());
     println("removeFigure(): Error catched:");
+    e.printStackTrace();
+    reloadFigures("world");
+  }
+}
+
+void removeCoin(int id) {
+  try {
+    if ((world.getJSONObject(id).getString("class")).equals("coin")) {
+      world.remove(id);
+      worldFigures.remove(id);
+      saveJSONArray(world, "world.json");
+      if (level <= levelAmount) {
+        saveJSONArray(world, "level"+level+".json");
+        println("removeCoin(): Coin removed permanently");
+      }
+      updateIDs();
+    } else {
+      println("removeCoin(): Error while removing coin: It seems like this id is not a coin: ");
+      println("id: "+id);
+      println("class: "+world.getJSONObject(id).getString("class"));
+    }
+  }
+  catch(Exception e) {
+    println("removeCoin(): Error while removing a Figure: id: "+id+", worldFigures.size():"+worldFigures.size());
+    println("removeCoin(): Error catched:");
     e.printStackTrace();
     reloadFigures("world");
   }
@@ -1350,15 +1383,17 @@ void loadSounds() {//backgroundMusicPlayer
   if (backgroundMusicPlayer != null) {
     for (int i = 0; i < backgroundMusicPlayer.length; i++) {
       if (backgroundMusicPlayer[i] != null) {
-        backgroundMusicPlayer[i].stop();
+        stopSound(i);
         backgroundMusicPlayer[i].setVolume(0, 0);
       }
     }
   }
-  String[] filenames = {"A_Night_Of_Dizzy_Spells.mp3", "Night_Shade.mp3", "Underclocked.mp3", "MAZE.mp3", "Powerup.mp3", "Sour Rock.mp3"};
+  String[] filenames = {"A_Night_Of_Dizzy_Spells.mp3", "Night_Shade.mp3", "Underclocked.mp3", "MAZE.mp3", "Powerup.mp3", "Sour Rock.mp3", "8bit_dungeon_boss.mp3",
+    "chopsticks.mp3", "digestive_biscuit.mp3", "dub_hub.mp3", "itty_bitty_8_bit.mp3", "mountain_trails.mp3", "pixelland.mp3", "virtual_boy.mp3"};
   backgroundMusicPlayer = new MediaPlayer[filenames.length];
   for (int i = 0; i < filenames.length; i++) {
     backgroundMusicPlayer[i] = loadSound("sounds/backgroundMusic/"+filenames[i]);
+    stopSound(i);
   }
   backgroundMusicFilesLoaded = filenames.length;
   loaded = 45;
@@ -1432,14 +1467,20 @@ void playSound(MediaPlayer sound, float amp, boolean multiple) {
 
 void playBackgroundMusic() {
   if (everythingLoaded) {
-    if (backgroundMusicPlays == -1 || !backgroundMusicPlayer[backgroundMusicPlays].isPlaying()) {
+    if ((backgroundMusicPlays == -1 || !backgroundMusicPlayer[backgroundMusicPlays].isPlaying()) && !isMusicPlaying()) {
+      stopAllSound();
       backgroundMusicPlays = int(random(0, backgroundMusicFilesLoaded));
     }
     if (!backgroundMusicPlayer[backgroundMusicPlays].isPlaying()) {
+      stopAllSound();
       playSound(backgroundMusicPlayer[backgroundMusicPlays], 0.3, false);
     }
     if (backgroundMusicAmp == 0 && backgroundMusicPlayer[backgroundMusicPlays].isPlaying()) {
       stopSound(backgroundMusicPlays);
+    }
+  }
+  for (int i = 0; i < backgroundMusicPlayer.length; i++) {
+    if (backgroundMusicPlayer[i].isPlaying()) {
     }
   }
 }
@@ -1448,12 +1489,14 @@ void playBackgroundMusic() {
 void playSound(int index) {
   if (backgroundMusicPlayer[index] != null) {
     backgroundMusicPlayer[index].start();
+  } else {
+    println("Error in playSound(int) while trying to play background sound, but index of array is null");
   }
 }
 
 // Call this function with an integer to stop playing the corresponding sound
 void stopSound(int index) {
-  if (backgroundMusicPlayer[index] != null) {
+  if (backgroundMusicPlayer[index] != null && backgroundMusicPlayer[index].isPlaying()) {
     backgroundMusicPlayer[index].stop();
     try {
       // You need to prepare the media player again once it has been stopped
@@ -1462,6 +1505,12 @@ void stopSound(int index) {
     catch (IOException e) {
       e.printStackTrace();
     }
+  }
+}
+
+void stopAllSound() {
+  for (int i =  0; i< backgroundMusicPlayer.length; i++) {
+    stopSound(i);
   }
 }
 
@@ -1494,49 +1543,6 @@ int whatPlays() {
     }
   }
   return -1;
-}
-
-//This function handles the key inputs for movement and other actions in the game.
-void keyListener() {
-  float speed = 2;
-  float maxSpeed = 12;
-
-  if (editModeOn) {
-    // Check if 'w' key is pressed
-    if (keysPressed['w']) {
-      if (player.vy >-maxSpeed) {
-        player.vy -= speed;
-      }
-    }
-    // Check if 's' key is pressed
-    if (keysPressed['s']) {
-      if (player.vy < maxSpeed) {
-        player.vy += speed;
-      }
-    }
-  }
-
-
-  // Check if 'a' key is pressed
-  if (keysPressed['a']) {
-    if (player.vx >-maxSpeed) {
-      player.vx -= speed;
-    }
-  }
-
-
-
-  // Check if 'd' key is pressed
-  if (keysPressed['d']) {
-    if (player.vx < maxSpeed) {
-      player.vx += speed;
-    }
-  }
-
-  // Check if spacebar (' ') is pressed
-  if (keysPressed[' ']) {
-    player.jump();
-  }
 }
 
 void coinAnimation(int x, int y) {
