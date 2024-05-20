@@ -32,7 +32,7 @@ class Bullet extends Figure {
   }
   boolean hit() {
     for (Figure f : worldFigures) {
-      if (f.hitbox.solid == true && f.getClass() != mi.getClass()) {
+      if (f.hitbox.solid == true && f.getClass() != missileLauncherClass.getClass()) {
         if (hitbox.overlap(f.hitbox)) {
           return true;
         }

@@ -38,7 +38,7 @@ class Player extends Figure {
       //reloadFigures("level"+level);
       //coinsCollected = 0;
     }
-    if (getFigureAt(int(checkpointBlock.x*blockSize+blockSize/2), int(checkpointBlock.y*blockSize+blockSize+blockSize/2)).getClass() == ch.getClass()) {
+    if (getFigureAt(int(checkpointBlock.x*blockSize+blockSize/2), int(checkpointBlock.y*blockSize+blockSize+blockSize/2)).getClass() == checkpointClass.getClass()) {
       player.x = checkpointBlock.x*blockSize;
       player.y = checkpointBlock.y*blockSize;
     } else {
@@ -133,13 +133,13 @@ class Player extends Figure {
     for (Figure f : nearbyFigures) {
       if (hitbox.overlap(f.hitbox)) {
         if (f.hitbox.solid == false) {
-          if (f.getClass() == s.getClass()) { //if player touches spikes
+          if (f.getClass() == sikeClass.getClass()) { //if player touches spikes
             if (editModeOn == false && !playerKilled) {
               resetToCheckpoint(true, int(f.x+f.w/2f), int(f.y+f.h/2f));
               playerKilled = true;
             }
           }
-          if (f.getClass() == co.getClass()&& editModeOn == false) { //if player touches a coin
+          if (f.getClass() == coinClass.getClass()&& editModeOn == false) { //if player touches a coin
             delID = f.id;
           }
         } else {
@@ -165,7 +165,7 @@ class Player extends Figure {
             }
           }
 
-          if (f.getClass() == sl.getClass()) {
+          if (f.getClass() == slimeClass.getClass()) {
             if (grounded && last) {
               vy = vy - 50;
               if (coolDownTimer <= 0) {
@@ -183,7 +183,7 @@ class Player extends Figure {
       }
       for (int i = -1; i < 2; i++) { //checks beneath the player for checkpoint/goal even if it is slightly beneath the player and player.grounded == false
         if (f.hitbox.pointInHitbox(int((x+w/2)+i*w/3), int(y+h+h/16))) {
-          if (f.getClass() == ch.getClass() || f.getClass() == go.getClass()) { //if player touces Checkpoint or Goal
+          if (f.getClass() == checkpointClass.getClass() || f.getClass() == goalClass.getClass()) { //if player touces Checkpoint or Goal
             checkpoint(f);
           }
         }
@@ -204,7 +204,7 @@ class Player extends Figure {
     try {
       int removeProjectileID = -1;
       for (int i = 0; i < projectiles.size(); i++) {
-        if (projectiles.get(i).getClass() == bu.getClass()) {
+        if (projectiles.get(i).getClass() == bulletClass.getClass()) {
           if (hitbox.overlap(projectiles.get(i).hitbox) && !editModeOn && !playerKilled) {
             explosionAnimation(projectiles.get(i));
             resetToCheckpoint(true, int(projectiles.get(i).x), int(projectiles.get(i).y));
@@ -226,7 +226,7 @@ class Player extends Figure {
   void checkpoint(Figure f) {
     if (!editModeOn && !gameFinished) {
       if (int(checkpointBlock.x) != int(f.x/blockSize) || int(checkpointBlock.y) != int((f.y/blockSize)-1)) {
-        if (f.getClass() == go.getClass()) {
+        if (f.getClass() == goalClass.getClass()) {
           playSound(goalSound, 0.6*SoundEffectsSwitch.timer);
           println("Goal reached! Level " + level+" finished. You have collected "+coinsCollected+" Coins and took "+framesSinceStarted+" frames!");
           loadTimes();
@@ -246,7 +246,7 @@ class Player extends Figure {
           gameFinished = true;
           coinsInWorld = 0;
           for (Figure fig : worldFigures) {
-            if (fig.getClass() == co.getClass()) {
+            if (fig.getClass() == coinClass.getClass()) {
               coinsInWorld++;
             }
           }

@@ -1,6 +1,6 @@
 class Cam {
   int x, y;
-  float camDampener = 0.72; //1 -> infinite large dampener; 0-> no dampener
+  float camDampener = 0.87; //1 -> infinite large dampener; 0-> no dampener
   Cam(int x, int y) {
     this.x = x;
     this.y = y;

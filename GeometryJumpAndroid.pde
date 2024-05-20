@@ -68,13 +68,13 @@ String selectedFilePath;
 String resource_pack = "default";
 
 //objects just to get their .getClass()
-Spike s;
-Slime sl;
-Coin co;
-Checkpoint ch;
-Goal go;
-Bullet bu;
-MissileLauncher mi;
+Spike sikeClass;
+Slime slimeClass;
+Coin coinClass;
+Checkpoint checkpointClass;
+Goal goalClass;
+Bullet bulletClass;
+MissileLauncher missileLauncherClass;
 
 boolean inGame = false; //indicates if the game is running (true) or if the player is in the menue (false)
 int level = 1; //selects level 1 as default
@@ -102,20 +102,20 @@ void setup() {
 
   frameRate(50);
   println("###########################################################################################################");
-  println("Start Program");
+  println("Start GeometryJump");
 
   loadImages();
   player = new Player(0, -1, playerSize, playerSize);
   loadTimes();
   thread("loadSounds");
 
-  s = new Spike();
-  sl = new Slime();
-  co = new Coin();
-  ch = new Checkpoint();
-  go = new Goal();
-  bu = new Bullet();
-  mi = new MissileLauncher();
+  sikeClass = new Spike();
+  slimeClass = new Slime();
+  coinClass = new Coin();
+  checkpointClass = new Checkpoint();
+  goalClass = new Goal();
+  bulletClass = new Bullet();
+  missileLauncherClass = new MissileLauncher();
 
   cam = new Cam(0, 0);
 
@@ -224,6 +224,7 @@ void draw() {
     widthScale = width/2400f;
     heightScale = height/1080f;
   }
+
   touchCheck();
   background(0);
   if (everythingLoaded) {
@@ -300,7 +301,7 @@ void draw() {
       Down.show();
     }
     Exit.show();
-    if (level > levelAmount ||debug) {
+    if (level > levelAmount || debug) {
       Edit.show();
       Share.show();
       Import.show();
@@ -466,7 +467,7 @@ void ButtonTouchCheck() {
   float maxSpeed = 12;
   boolean touchedLeft = false;
   boolean touchedRight = false;
-  float walkSpeedMultiplier = 2.2;
+  float walkSpeedMultiplier = 2.3;
   if (touch) {
 
     //for (TouchEvent.Pointer pointer : touches) {
